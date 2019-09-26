@@ -9,10 +9,10 @@ from werkzeug.utils import secure_filename
 from docx import Document
 import json
 from coolname import generate_slug
-
+from datetime import timedelta
 
 app = Flask(__name__)
-app.secret_key= 'hui'
+app.secret_key= 'huihui'
 
 #Config MySQL
 app.config['MYSQL_HOST'] = 'localhost'
@@ -24,6 +24,12 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 #init Mysql
 mysql = MySQL(app)
 
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(minutes=5)
+
+
 def is_logged(f):
 	@wraps(f)
 	def wrap(*args, **kwargs):
@@ -32,8 +38,8 @@ def is_logged(f):
 		else:
 			flash('Unauthorized, Please login','danger')
 			return redirect(url_for('login'))
-
 	return wrap
+
 
 def doctodict(filepath):
     document = Document(filepath)
@@ -41,13 +47,12 @@ def doctodict(filepath):
     count=1
     for table in document.tables:
         temp = {}
-        for rowNo,row in enumerate(table.rows):
+        for rowNo,_ in enumerate(table.rows):
             temp[table.cell(rowNo, 0).text]=table.cell(rowNo, 1).text
         data[count] = temp
         count+=1
  
     return data
- 
 
 
 class RegisterForm(Form):
@@ -68,6 +73,11 @@ class UploadForm(FlaskForm):
     show_result = BooleanField('Show Result after completion')
     duration = IntegerField('Duration')
     password = StringField('Test Password', [validators.Length(min=3, max=6)])
+
+
+class TestForm(Form):
+	test_id = StringField('Test ID')
+	password = PasswordField('Test Password')
 
 
 @app.route('/')
@@ -162,3 +172,43 @@ def create_test():
 		mysql.connection.commit()
 		cur.close()
 	return render_template('create_test.html' , form = form)
+
+
+@app.route('/give-test/<testid>', methods=['GET','POST'])
+@is_logged
+def test(testid):
+	if request.method == 'POST':
+		data = request.form 
+		qid = data['qid']
+		print(qid)
+		cur = mysql.connection.cursor()
+		results = cur.execute('SELECT * from questions where test_id = %s and qid = %s', (testid, qid))
+		if results > 0:
+			data = cur.fetchone()
+			del data['ans']
+			print(data)
+			cur.close()
+			return json.dumps(data)
+	return render_template('quiz.html' ,testid=testid)
+
+
+@app.route("/give-test", methods = ['GET', 'POST'])
+@is_logged
+def give_test():
+	form = TestForm(request.form)
+	if request.method == 'POST' and form.validate():
+		test_id = form.test_id.data
+		password_candidate = form.password.data
+		cur = mysql.connection.cursor()
+		results = cur.execute('SELECT * from teachers where test_id = %s', [test_id])
+		if results > 0:
+			data = cur.fetchone()
+			password = data['password']
+			if password == password_candidate:
+				return redirect(url_for('test' , testid = test_id))
+		cur.close()
+	return render_template('give_test.html', form = form)
+
+
+if __name__ == "__main__":
+	app.run(debug=True)

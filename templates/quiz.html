@@ -1,13 +1,48 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-  <h1>{{testid}}</h1>
-  <div id="question"></div>
-  <div id="a"></div>
-  <div id="b"></div>
-  <div id="c"></div>
-  <div id="d"></div>
-  <div class="btn btn-primary" id="submit">Submit</div>
-  <div class="btn btn-primary" id="next">Next</div>
-  <div class="btn btn-primary" id="prev">Previous</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='app.js') }}"></script>
+<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='disp.css') }}">
+
+<!-- <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
+ -->
+
+<table>
+<tr>
+	<td id='queid'>Question No. </td>
+	<td id='mark'>Marks: {{ marks }}</td>
+</tr>
+</table>
+<pre class="prettyprint" id="pretest">
+	<p id="que">{{ q }}</p>
+</pre>
+
+<table id="options">
+	<tr>
+		<td id='a'>𝐀. {{ a }}</td>
+		<td id='b'>𝐁. {{ b }}</td>
+	</tr>
+	<tr>
+		<td id='c'>𝐂. {{ c }}</td>
+		<td id='d'>𝐃. {{ d }}</td>
+	</tr>
+</table>
+
+
+<footer class="page-footer fixed-bottom pt-4">
+  <div class="container">
+
+    <ul class="list-unstyled list-inline text-center py-2">
+      <li class="list-inline-item">
+        <input type="button" value="Prev" id="prev" class="btn btn-primary btn-rounded">
+        <input type="button" value="Next" id="next" class="btn btn-primary btn-rounded">
+        <input type="submit" value="Submit" id="submit" class="btn btn-success btn-rounded">
+      </li>
+    </ul>
+  </div>
+</footer>
+
 {% endblock %}

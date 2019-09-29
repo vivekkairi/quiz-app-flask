@@ -177,19 +177,13 @@ def create_test():
 @app.route('/give-test/<testid>', methods=['GET','POST'])
 @is_logged
 def test(testid):
-	if request.method == 'POST':
-		data = request.form 
-		qid = data['qid']
-		print(qid)
-		cur = mysql.connection.cursor()
-		results = cur.execute('SELECT * from questions where test_id = %s and qid = %s', (testid, qid))
-		if results > 0:
-			data = cur.fetchone()
-			del data['ans']
-			print(data)
-			cur.close()
-			return json.dumps(data)
-	return render_template('quiz.html' ,testid=testid)
+	if request.method == 'GET':
+		return render_template('quiz.html' ,**data)
+	else:
+		#Recieve post data of qid and username
+		#Fetch question from database
+		#JSONify that data and return
+		#Rest let the frontend JS handle
 
 
 @app.route("/give-test", methods = ['GET', 'POST'])

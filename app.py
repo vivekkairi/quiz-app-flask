@@ -10,6 +10,7 @@ from docx import Document
 import json
 from coolname import generate_slug
 from datetime import timedelta
+import random
 
 app = Flask(__name__)
 app.secret_key= 'huihui'
@@ -181,7 +182,13 @@ def test(testid):
 		data = {'marks': '', 'q': '', 'a': "", 'b':"",'c':"",'d':""}
 		return render_template('quiz.html' ,**data)
 	else:
-		pass
+		num = request.form['no']
+		cur = mysql.connection.cursor()
+		results = cur.execute('SELECT * from questions where test_id = %s and qid =%s',(testid, num))
+		if results > 0:
+			data = cur.fetchone()
+			del data['ans']
+			return json.dumps(data)
 		#Recieve post data of qid and username
 		#Fetch question from database
 		#JSONify that data and return
@@ -204,6 +211,22 @@ def give_test():
 				return redirect(url_for('test' , testid = test_id))
 		cur.close()
 	return render_template('give_test.html', form = form)
+
+
+@app.route('/randomize', methods = ['POST'])
+def random_gen():
+	if request.method == "POST":
+		id = request.form['id']
+		print(id)
+		cur = mysql.connection.cursor()
+		results = cur.execute('SELECT count(*) from questions where test_id = %s', [id.split('-',1)[-1]])
+		if results > 0:
+			data = cur.fetchone()
+			total = data['count(*)']
+			nos = list(range(1,int(total)+1))
+			random.Random(id).shuffle(nos)
+			cur.close()
+			return json.dumps(nos)
 
 
 if __name__ == "__main__":

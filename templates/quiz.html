@@ -2,17 +2,14 @@
 
 {% block body %}
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='app.js') }}"></script>
-<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='disp.css') }}">
+
 
 <!-- <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
  -->
 
 <table>
 <tr>
-	<td id='queid'>Question No. </td>
+  <td id='queid'>Question No.</td>
 	<td id='mark'>Marks: {{ marks }}</td>
 </tr>
 </table>
@@ -44,5 +41,10 @@
     </ul>
   </div>
 </footer>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='app.js') }}"></script>
+<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='disp.css') }}">
 
 {% endblock %}

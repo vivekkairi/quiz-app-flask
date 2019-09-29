@@ -178,8 +178,10 @@ def create_test():
 @is_logged
 def test(testid):
 	if request.method == 'GET':
+		data = {'marks': '', 'q': '', 'a': "", 'b':"",'c':"",'d':""}
 		return render_template('quiz.html' ,**data)
 	else:
+		pass
 		#Recieve post data of qid and username
 		#Fetch question from database
 		#JSONify that data and return

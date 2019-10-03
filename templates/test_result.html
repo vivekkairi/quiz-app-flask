@@ -1,0 +1,19 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+    <table>
+        {% for result in results%}
+        <tr>
+            <td>{{result['q']}} </td>
+            </tr>
+        <tr>
+            <td>{{result['a']}}</td>
+            <td>{{result['c']}}</td>
+        </tr>
+        <tr>
+            <td>{{result['b']}}</td>
+            <td>{{result['d']}}</td>
+            </tr>
+        {% endfor %}
+    </table> 
+{% endblock %}1

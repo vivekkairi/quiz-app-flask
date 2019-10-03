@@ -4,10 +4,12 @@
   <h1>Dashboard <small> Welcome {{session.username}}</small></h1>
   <div class="row">
   	<div class="col-sm-6">
-  		<a href="/create-test"><div class="btn btn-primary" id="teacher">Teacher</div></a>
+		<a href="/create-test"><div class="btn btn-primary" id="teacher">Teacher</div></a>
+		<a href="/{{session.username}}/tests-created"><div class="btn btn-primary">View all tests</div></a>
   	</div>
   	<div class="col-sm-6">
-  		<a href="/give-test"><div class="btn btn-primary" id="student">Student</div></a>
+		<a href="/give-test"><div class="btn btn-primary" id="student">Student</div></a>
+		<a href="/{{session.username}}/tests-given"><div class="btn btn-primary">View all tests</div></a>
   	</div>
   </div>
 {% endblock %}

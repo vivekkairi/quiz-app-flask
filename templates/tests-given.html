@@ -1,0 +1,6 @@
+{% extends 'layout.html' %}
+{% block body %}
+    {% for test in tests %}
+        <div><span>{{test['test_id']}}</span> <button>Check Result</button></div>
+    {% endfor %}
+{% endblock %}1

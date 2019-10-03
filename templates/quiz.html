@@ -1,12 +1,8 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-
-
-
-<!-- <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
- -->
-
+<script type="text/javascript"> var answers = "{{answers}}";</script>
+<div id="time">{{duration}}</div>
 <table>
 <tr>
   <td id='queid'>Question No.</td>
@@ -27,24 +23,29 @@
 		<td id='d'>𝐃. {{ d }}</td>
 	</tr>
 </table>
-
+    
+<div id="overlay">
+  <div class="container" id="question-list">
+  </div>
+</div>
 
 <footer class="page-footer fixed-bottom pt-4">
   <div class="container">
 
     <ul class="list-unstyled list-inline text-center py-2">
       <li class="list-inline-item">
+        <button class="btn btn-primary btn-rounded" id="questions">Questions</button>
         <input type="button" value="Prev" id="prev" class="btn btn-primary btn-rounded">
         <input type="button" value="Next" id="next" class="btn btn-primary btn-rounded">
-        <input type="submit" value="Submit" id="submit" class="btn btn-success btn-rounded">
+        <input type="button" value="Submit" id="submit" class="btn btn-success btn-rounded">
+        <button class="btn btn-primary btn-rounded" id="bookmark">Bookmark</button>
       </li>
     </ul>
   </div>
 </footer>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='app.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='disp.css') }}">
 
 {% endblock %}

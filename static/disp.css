@@ -1,0 +1,53 @@
+table, tr, td{
+	border: 1px solid gray;
+}
+table{
+	width: 100%;
+}
+td{
+	text-align: left;
+	padding-left: 16px;
+	width: 50%;
+	height: 60px;
+	font-size: 16px;
+}
+#que{
+	font-size: 18px;
+}
+footer {
+    position: fixed;
+    bottom: 0px;
+}
+
+#overlay {
+	position: fixed; /* Sit on top of the page content */
+	display: none; /* Hidden by default */
+	width: 100%; /* Full width (cover the whole page) */
+	height: 100%; /* Full height (cover the whole page) */
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0,0,0,0.5); /* Black background with opacity */
+	z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+	cursor: pointer; /* Add a pointer on hover */
+}
+
+#question-list {
+	margin-top: 25%;
+	background-color: #fff;
+}
+
+.question {
+	float: left;
+	margin: 2rem;
+	padding: 1.4em;
+	border: 1px solid;
+}
+
+#close {
+	position: absolute;
+	top: 8px;
+	right: 16px;
+	font-size: 18px;
+}

@@ -174,30 +174,54 @@ def create_test():
 		cur.close()
 	return render_template('create_test.html' , form = form)
 
+marked_ans = {}
 
 @app.route('/give-test/<testid>', methods=['GET','POST'])
 @is_logged
 def test(testid):
+	global duration,marked_ans
 	if request.method == 'GET':
-		data = {'marks': '', 'q': '', 'a': "", 'b':"",'c':"",'d':""}
-		return render_template('quiz.html' ,**data)
+		try:
+			data = {'duration': duration, 'marks': '', 'q': '', 'a': "", 'b':"",'c':"",'d':"" }
+			return render_template('quiz.html' ,**data, answers=marked_ans)
+		except:
+			return redirect(url_for('give_test'))
 	else:
-		num = request.form['no']
 		cur = mysql.connection.cursor()
-		results = cur.execute('SELECT * from questions where test_id = %s and qid =%s',(testid, num))
-		if results > 0:
-			data = cur.fetchone()
-			del data['ans']
-			return json.dumps(data)
-		#Recieve post data of qid and username
-		#Fetch question from database
-		#JSONify that data and return
-		#Rest let the frontend JS handle
+		flag = request.form['flag']
+		if flag == 'get':
+			num = request.form['no']
+			results = cur.execute('SELECT * from questions where test_id = %s and qid =%s',(testid, num))
+			if results > 0:
+				data = cur.fetchone()
+				del data['ans']
+				cur.close()
+				return json.dumps(data)
+		elif flag=='mark':
+			qid = request.form['qid']
+			ans = request.form['ans']
+			results = cur.execute('SELECT * from students where test_id =%s and qid = %s and username = %s', (testid, qid, session['username']))
+			if results > 0:
+				cur.execute('UPDATE students set ans = %s where test_id = %s and qid = %s and username = %s', (testid, qid, session['username']))
+			else:
+				cur.execute('INSERT INTO students values(%s,%s,%s,%s)', (session['username'], testid, qid, ans))
+			mysql.connection.commit()
+			cur.close()
+		elif flag=='time':
+			time_left = request.form['time']
+			cur.execute('UPDATE studentTestInfo set time_left=SEC_TO_TIME(%s) where test_id = %s and username = %s', (time_left, testid, session['username']))
+			mysql.connection.commit()
+			cur.close()
+		else:
+			cur.execute('UPDATE studentTestInfo set completed=true and time_left=sec_to_time(0) where test_id = %s and username = %s', (testid, session['username']))
+			mysql.connection.commit()
+			cur.close()
 
 
 @app.route("/give-test", methods = ['GET', 'POST'])
 @is_logged
 def give_test():
+	global duration, marked_ans	
 	form = TestForm(request.form)
 	if request.method == 'POST' and form.validate():
 		test_id = form.test_id.data
@@ -207,8 +231,36 @@ def give_test():
 		if results > 0:
 			data = cur.fetchone()
 			password = data['password']
+			duration = data['duration']
 			if password == password_candidate:
+				session['allowed_test']=test_id
+				results = cur.execute('SELECT time_to_sec(time_left) as time_left,completed from studentTestInfo where username = %s and test_id = %s', (session['username'], test_id))
+				if results > 0:
+					results = cur.fetchone()
+					is_completed = results['completed']
+					if is_completed == 0:
+						time_left = results['time_left']
+						if time_left < duration:
+							duration = time_left
+							results = cur.execute('SELECT * from students where username = %s and test_id = %s', (session['username'], test_id))
+							marked_ans = {}
+							if results > 0:
+								results = cur.fetchall()
+								for row in results:
+									marked_ans[row['qid']] = row['ans']
+								marked_ans = json.dumps(marked_ans)
+					else:
+						flash('Test already given', 'success')
+						return redirect(url_for('give_test'))
+				else:
+					cur.execute('INSERT into studentTestInfo (username, test_id,time_left) values(%s,%s,SEC_TO_TIME(%s))', (session['username'], test_id, duration))
+					mysql.connection.commit()
 				return redirect(url_for('test' , testid = test_id))
+			else:
+				flash('Invalid password', 'danger')
+				return redirect(url_for('give_test'))
+		flash('Invalid testid', 'danger')
+		return redirect(url_for('give_test'))
 		cur.close()
 	return render_template('give_test.html', form = form)
 
@@ -217,16 +269,62 @@ def give_test():
 def random_gen():
 	if request.method == "POST":
 		id = request.form['id']
-		print(id)
 		cur = mysql.connection.cursor()
-		results = cur.execute('SELECT count(*) from questions where test_id = %s', [id.split('-',1)[-1]])
+		results = cur.execute('SELECT count(*) from questions where test_id = %s', [id])
 		if results > 0:
 			data = cur.fetchone()
 			total = data['count(*)']
 			nos = list(range(1,int(total)+1))
-			random.Random(id).shuffle(nos)
+			random.Random(session['username'] + id).shuffle(nos)
 			cur.close()
 			return json.dumps(nos)
+
+
+@app.route('/<username>/<testid>')
+@is_logged
+def check_result(username, testid):
+	print(username)
+	if username is session['username']:
+		cur = mysql.connection.cursor()
+		results = cur.execute('SELECT * FROM teachers where username = %s and test_id = %s', (username, testid))
+		if results>0:
+			results = cur.fetchone()
+			check = results['show_ans']
+			if check == 1:
+				results = cur.execute('SELECT q,marks,questions.ans as correct, students.ans,a,b,c,d from students,questions where username = %s and students.test_id = questions.test_id and students.test_id = %s and students.qid=questions.qid', (username, testid))
+				if results > 0:
+					results = cur.fetchall()
+					return render_template('test_result.html', results= results)
+			else:
+				flash('You are not authorized to check the result', 'danger')
+	else:
+		return redirect(url_for('dashboard'))
+	
+
+@app.route('/<username>/tests-given')
+@is_logged
+def tests_given(username):
+	if username == session['username']:
+		cur = mysql.connection.cursor()
+		results = cur.execute('select distinct(test_id) from students where username = %s', [username])
+		results = cur.fetchall()
+		return render_template('tests-given.html', tests=results)
+	else:
+		flash('You are not authorized', 'danger')
+		return redirect(url_for('dashboard'))
+
+
+@app.route('/<username>/tests-created')
+@is_logged
+def tests_created(username):
+	if username == session['username']:
+		cur = mysql.connection.cursor()
+		results = cur.execute('select test_id from teachers where username = %s', [username])
+		results = cur.fetchall()
+		return render_template('tests-given.html', tests=results)
+	else:
+		flash('You are not authorized', 'danger')
+		return redirect(url_for('dashboard'))
 
 
 if __name__ == "__main__":

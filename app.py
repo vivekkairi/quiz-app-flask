@@ -7,10 +7,15 @@ from passlib.hash import sha256_crypt
 from functools import wraps
 from werkzeug.utils import secure_filename
 from docx import Document
-import json
 from coolname import generate_slug
 from datetime import timedelta
+from flask_mail import Mail, Message
+from threading import Thread
+from flask import render_template_string
+from itsdangerous import URLSafeTimedSerializer
+from validate_email import validate_email
 import random
+import json
 
 app = Flask(__name__)
 app.secret_key= 'huihui'
@@ -22,13 +27,88 @@ app.config['MYSQL_PASSWORD'] = 'nubafgg'
 app.config['MYSQL_DB'] = 'flask'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
+
+app.config.update(
+	DEBUG=True,
+	MAIL_SERVER='smtp.gmail.com',
+	MAIL_PORT=465,
+	MAIL_USE_SSL=True,
+	MAIL_USERNAME = 'nickqwerty76@gmail.com',
+	MAIL_PASSWORD = 'Zeitgeist77'
+	)
+mail = Mail(app)
+
+
+######################################################################
+
+#  pip install validate_email py3DNS itsdangerous
+
+
+def asynch(f):
+	@wraps(f)
+	def wrapper(*args, **kwargs):
+		thr = Thread(target=f, args=args, kwargs=kwargs)
+		thr.start()
+	return wrapper
+
+@asynch
+def send_async_email(app, msg):
+	with app.app_context():
+		mail.send(msg)
+
+
+htmlbody='''
+Your account on <b>The Best</b> Quiz App was successfully created.
+Please click the link below to confirm your email address and
+activate your account:
+  
+<a href="{{ confirm_url }}">{{ confirm_url }}</a>
+ 
+--
+Questions? Comments? Email nickqwerty76@gmail.com.
+'''
+
+@app.route('/sendmail', methods = ['GET','POST'])
+def send_email(recipients,html_body):
+	try:
+		msg = Message('Confirm Your Email Address',
+		  sender="nickqwerty76@gmail.com",
+		  recipients=recipients)
+		# msg.body = "Yo!\nHave you heard the good word of Python???"
+		msg.html = html_body
+		send_async_email(app, msg)
+		# return 'Mail sent!'
+		return
+	except Exception as e:
+		# return(str(e))
+		return
+
+
+def send_confirmation_email(user_email):
+	confirm_serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+ 
+	confirm_url = url_for('confirm_email',
+		token=confirm_serializer.dumps(user_email, salt='email-confirmation-salt'),
+		_external=True)
+ 
+	html = render_template_string(htmlbody, confirm_url=confirm_url)
+
+	send_email([user_email], html)
+
+
+
+
+
+##########################################################################3
+
+
 #init Mysql
 mysql = MySQL(app)
 
 @app.before_request
 def make_session_permanent():
-    session.permanent = True
-    app.permanent_session_lifetime = timedelta(minutes=5)
+	session.permanent = True
+	app.permanent_session_lifetime = timedelta(minutes=5)
 
 
 def is_logged(f):
@@ -43,17 +123,17 @@ def is_logged(f):
 
 
 def doctodict(filepath):
-    document = Document(filepath)
-    data={}
-    count=1
-    for table in document.tables:
-        temp = {}
-        for rowNo,_ in enumerate(table.rows):
-            temp[table.cell(rowNo, 0).text]=table.cell(rowNo, 1).text
-        data[count] = temp
-        count+=1
+	document = Document(filepath)
+	data={}
+	count=1
+	for table in document.tables:
+		temp = {}
+		for rowNo,_ in enumerate(table.rows):
+			temp[table.cell(rowNo, 0).text]=table.cell(rowNo, 1).text
+		data[count] = temp
+		count+=1
  
-    return data
+	return data
 
 
 class RegisterForm(Form):
@@ -68,12 +148,12 @@ class RegisterForm(Form):
 
 
 class UploadForm(FlaskForm):
-    doc = FileField('Docx Upload', validators=[FileRequired()])
-    start_date_time = DateTimeField('Start Date & Time')
-    end_date_time = DateTimeField('End Date & Time')
-    show_result = BooleanField('Show Result after completion')
-    duration = IntegerField('Duration')
-    password = StringField('Test Password', [validators.Length(min=3, max=6)])
+	doc = FileField('Docx Upload', validators=[FileRequired()])
+	start_date_time = DateTimeField('Start Date & Time')
+	end_date_time = DateTimeField('End Date & Time')
+	show_result = BooleanField('Show Result after completion')
+	duration = IntegerField('Duration')
+	password = StringField('Test Password', [validators.Length(min=3, max=6)])
 
 
 class TestForm(Form):
@@ -85,22 +165,42 @@ class TestForm(Form):
 def index():
 	return render_template('layout.html')
 
-
 @app.route('/register', methods=['GET','POST'])
 def register():
 	form = RegisterForm(request.form)
 	if request.method == 'POST' and form.validate():
 		name = form.name.data 
 		email = form.email.data
+
+		# check if email is valid, verify
+
+		# is_valid = validate_email(email,verify=True)
+		# if is_valid == False:
+		# 	flash('Wrong email','danger')
+		# do something
+
 		username = form.username.data
 		password = sha256_crypt.encrypt(str(form.password.data))
 		cur = mysql.connection.cursor()
-		cur.execute('INSERT INTO users(username,name,email, password) values(%s,%s,%s,%s)', (username,name, email, password))
+		cur.execute('INSERT INTO users(username,name,email, password,confirmed) values(%s,%s,%s,%s,0)', (username,name, email, password))
 		mysql.connection.commit()
 		cur.close()
-		flash('You are now registered.', 'success')
-		redirect(url_for('index'))
+		send_confirmation_email(email)
+		flash('Thanks for registering!  Please check your email to confirm your email address.', 'success')
+		return redirect(url_for('index')) 
+		# change in login function to redirect to warning page
+
 	return render_template('register.html', form=form)
+
+
+######################################################################
+
+	# except IntegrityError:
+	#     db.session.rollback()
+	#     flash('ERROR! Email ({}) already exists.'.format(form.email.data), 'error')
+
+
+
 
 
 @app.route('/login', methods=['GET','POST'])
@@ -174,54 +274,30 @@ def create_test():
 		cur.close()
 	return render_template('create_test.html' , form = form)
 
-marked_ans = {}
 
 @app.route('/give-test/<testid>', methods=['GET','POST'])
 @is_logged
 def test(testid):
-	global duration,marked_ans
 	if request.method == 'GET':
-		try:
-			data = {'duration': duration, 'marks': '', 'q': '', 'a': "", 'b':"",'c':"",'d':"" }
-			return render_template('quiz.html' ,**data, answers=marked_ans)
-		except:
-			return redirect(url_for('give_test'))
+		data = {'marks': '', 'q': '', 'a': "", 'b':"",'c':"",'d':""}
+		return render_template('quiz.html' ,**data)
 	else:
+		num = request.form['no']
 		cur = mysql.connection.cursor()
-		flag = request.form['flag']
-		if flag == 'get':
-			num = request.form['no']
-			results = cur.execute('SELECT * from questions where test_id = %s and qid =%s',(testid, num))
-			if results > 0:
-				data = cur.fetchone()
-				del data['ans']
-				cur.close()
-				return json.dumps(data)
-		elif flag=='mark':
-			qid = request.form['qid']
-			ans = request.form['ans']
-			results = cur.execute('SELECT * from students where test_id =%s and qid = %s and username = %s', (testid, qid, session['username']))
-			if results > 0:
-				cur.execute('UPDATE students set ans = %s where test_id = %s and qid = %s and username = %s', (testid, qid, session['username']))
-			else:
-				cur.execute('INSERT INTO students values(%s,%s,%s,%s)', (session['username'], testid, qid, ans))
-			mysql.connection.commit()
-			cur.close()
-		elif flag=='time':
-			time_left = request.form['time']
-			cur.execute('UPDATE studentTestInfo set time_left=SEC_TO_TIME(%s) where test_id = %s and username = %s', (time_left, testid, session['username']))
-			mysql.connection.commit()
-			cur.close()
-		else:
-			cur.execute('UPDATE studentTestInfo set completed=true and time_left=sec_to_time(0) where test_id = %s and username = %s', (testid, session['username']))
-			mysql.connection.commit()
-			cur.close()
+		results = cur.execute('SELECT * from questions where test_id = %s and qid =%s',(testid, num))
+		if results > 0:
+			data = cur.fetchone()
+			del data['ans']
+			return json.dumps(data)
+		#Recieve post data of qid and username
+		#Fetch question from database
+		#JSONify that data and return
+		#Rest let the frontend JS handle
 
 
 @app.route("/give-test", methods = ['GET', 'POST'])
 @is_logged
 def give_test():
-	global duration, marked_ans	
 	form = TestForm(request.form)
 	if request.method == 'POST' and form.validate():
 		test_id = form.test_id.data
@@ -231,36 +307,8 @@ def give_test():
 		if results > 0:
 			data = cur.fetchone()
 			password = data['password']
-			duration = data['duration']
 			if password == password_candidate:
-				session['allowed_test']=test_id
-				results = cur.execute('SELECT time_to_sec(time_left) as time_left,completed from studentTestInfo where username = %s and test_id = %s', (session['username'], test_id))
-				if results > 0:
-					results = cur.fetchone()
-					is_completed = results['completed']
-					if is_completed == 0:
-						time_left = results['time_left']
-						if time_left < duration:
-							duration = time_left
-							results = cur.execute('SELECT * from students where username = %s and test_id = %s', (session['username'], test_id))
-							marked_ans = {}
-							if results > 0:
-								results = cur.fetchall()
-								for row in results:
-									marked_ans[row['qid']] = row['ans']
-								marked_ans = json.dumps(marked_ans)
-					else:
-						flash('Test already given', 'success')
-						return redirect(url_for('give_test'))
-				else:
-					cur.execute('INSERT into studentTestInfo (username, test_id,time_left) values(%s,%s,SEC_TO_TIME(%s))', (session['username'], test_id, duration))
-					mysql.connection.commit()
 				return redirect(url_for('test' , testid = test_id))
-			else:
-				flash('Invalid password', 'danger')
-				return redirect(url_for('give_test'))
-		flash('Invalid testid', 'danger')
-		return redirect(url_for('give_test'))
 		cur.close()
 	return render_template('give_test.html', form = form)
 
@@ -269,49 +317,21 @@ def give_test():
 def random_gen():
 	if request.method == "POST":
 		id = request.form['id']
+		print(id)
 		cur = mysql.connection.cursor()
-		results = cur.execute('SELECT count(*) from questions where test_id = %s', [id])
+		results = cur.execute('SELECT count(*) from questions where test_id = %s', [id.split('-',1)[-1]])
 		if results > 0:
 			data = cur.fetchone()
 			total = data['count(*)']
 			nos = list(range(1,int(total)+1))
-			random.Random(session['username'] + id).shuffle(nos)
+			random.Random(id).shuffle(nos)
 			cur.close()
 			return json.dumps(nos)
 
 
-@app.route('/<username>/<testid>')
-@is_logged
-def check_result(username, testid):
-	print(username)
-	if username is session['username']:
-		cur = mysql.connection.cursor()
-		results = cur.execute('SELECT * FROM teachers where username = %s and test_id = %s', (username, testid))
-		if results>0:
-			results = cur.fetchone()
-			check = results['show_ans']
-			if check == 1:
-				results = cur.execute('SELECT q,marks,questions.ans as correct, students.ans,a,b,c,d from students,questions where username = %s and students.test_id = questions.test_id and students.test_id = %s and students.qid=questions.qid', (username, testid))
-				if results > 0:
-					results = cur.fetchall()
-					return render_template('test_result.html', results= results)
-			else:
-				flash('You are not authorized to check the result', 'danger')
-	else:
-		return redirect(url_for('dashboard'))
-	
+# Zeitgeist77 password nickqwerty76
 
-@app.route('/<username>/tests-given')
-@is_logged
-def tests_given(username):
-	if username == session['username']:
-		cur = mysql.connection.cursor()
-		results = cur.execute('select distinct(test_id) from students where username = %s', [username])
-		results = cur.fetchall()
-		return render_template('tests-given.html', tests=results)
-	else:
-		flash('You are not authorized', 'danger')
-		return redirect(url_for('dashboard'))
+######################################################################3
 
 
 @app.route('/<username>/tests-created')
@@ -322,9 +342,34 @@ def tests_created(username):
 		results = cur.execute('select test_id from teachers where username = %s', [username])
 		results = cur.fetchall()
 		return render_template('tests-created.html', tests=results)
-	else:
-		flash('You are not authorized', 'danger')
-		return redirect(url_for('dashboard'))
+
+@app.route('/confirm/<token>')
+def confirm_email(token):
+	try:
+		confirm_serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+		email = confirm_serializer.loads(token, salt='email-confirmation-salt', max_age=3600)
+	except:
+		flash('The confirmation link is invalid or has expired.', 'error')
+		return redirect(url_for('login'))
+ 
+
+	cur = mysql.connection.cursor()
+	results = cur.execute('SELECT * from users where email = %s' , [email])
+	if results > 0:
+		data = cur.fetchone()
+		email_confirmed = data['confirmed']
+		if email_confirmed:
+			flash('Account already confirmed. Please login.', 'info')
+		else:
+
+			results = cur.execute('UPDATE users SET confirmed = 1 where email = %s' , [email])
+			mysql.connection.commit()
+			cur.close()
+
+			flash('Thank you for confirming your email address!')
+	
+		return redirect(url_for('index'))
+
 
 
 if __name__ == "__main__":

@@ -321,7 +321,7 @@ def tests_created(username):
 		cur = mysql.connection.cursor()
 		results = cur.execute('select test_id from teachers where username = %s', [username])
 		results = cur.fetchall()
-		return render_template('tests-given.html', tests=results)
+		return render_template('tests-created.html', tests=results)
 	else:
 		flash('You are not authorized', 'danger')
 		return redirect(url_for('dashboard'))

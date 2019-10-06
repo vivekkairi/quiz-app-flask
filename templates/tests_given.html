@@ -1,6 +1,28 @@
 {% extends 'layout.html' %}
 {% block body %}
+<style type="text/css">
+	td{
+		padding: 10px;
+		text-align: center;
+	}
+</style>
+<table border="1" width="70%" align="center">
+	<tr align="center">
+		<td>Test ID</td>
+		<td>Marks</td>
+		<td></td>
+	</tr>
     {% for test in tests %}
-        <div><span>{{test['test_id']}}</span> <a href="/{{session.username}}/{{test['test_id']}}"><button>Check Result</button></a></div>
+    <tr>	
+    	<td>{{test['test_id']}}</td> 
+    	<td>{{test['marks']}}</td> 
+    	<td>
+    		<a href="/{{session.username}}/{{test['test_id']}}">
+    		<button class="btn btn-primary">Check Result</button>
+    	</a>
+    	</td>
+    </tr>
     {% endfor %}
-{% endblock %}1
+
+</table>
+{% endblock %}

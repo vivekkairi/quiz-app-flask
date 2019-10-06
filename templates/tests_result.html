@@ -15,8 +15,6 @@
   {% endif %}
 {% endmacro %}
 
-<!-- display abcd also before options -->
-
 
 {% block body %}
     {% for result in results%}
@@ -37,6 +35,10 @@
             <tr>
                 {{ show_opt(result,'c') }}
                 {{ show_opt(result,'d') }}
+            </tr>
+            <tr>
+                <td colspan="2"><b>Explanation</b>:  {{result.explanation}} </td>
+    
             </tr>
         </table> 
     {% endfor %}

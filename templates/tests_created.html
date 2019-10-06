@@ -13,7 +13,7 @@
                 <tr>
                     <th>{{test['test_id']}}</th>
                     <th>{{test['password']}}</th>
-                    <th><div class="btn btn-primary btn-md">Result</div></th>
+                    <th><a class="btn btn-primary btn-md" href=/{{session.username}}/tests-created/{{test['test_id']}}>Result</a></th>
                 </tr>
             {% endfor %}
             

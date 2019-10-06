@@ -1,4 +1,4 @@
-from flask import Flask,request, render_template, flash, redirect, url_for,session, logging
+from flask import Flask,request, render_template, flash, redirect, url_for,session, logging, send_file
 from flask_mysqldb import MySQL 
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators, DateTimeField, BooleanField, IntegerField
 from flask_wtf import FlaskForm
@@ -16,6 +16,9 @@ from itsdangerous import URLSafeTimedSerializer
 from validate_email import validate_email
 import random
 import json
+import csv
+import operator
+
 
 app = Flask(__name__)
 app.secret_key= 'huihui'
@@ -192,12 +195,14 @@ def login():
 			data = cur.fetchone()
 			password = data['password']
 			confirmed = data['confirmed']
+			name = data['name']
 			if confirmed == 0:
 				error = 'Please confirm email before logging in'
 				return render_template('login.html', error=error)
 			if sha256_crypt.verify(password_candidate, password):
 				session['logged_in'] = True
 				session['username'] = username
+				session['name'] = name
 				return redirect(url_for('dashboard'))
 			else:
 				error = 'Invalid password'
@@ -355,7 +360,6 @@ def give_test():
 def random_gen():
 	if request.method == "POST":
 		id = request.form['id']
-		print(id)
 		cur = mysql.connection.cursor()
 		results = cur.execute('SELECT count(*) from questions where test_id = %s', [id])
 		if results > 0:
@@ -399,6 +403,31 @@ def tests_given(username):
 		flash('You are not authorized', 'danger')
 		return redirect(url_for('dashboard'))
 
+@app.route('/<username>/tests-created/<testid>', methods = ['POST','GET'])
+@is_logged
+def student_results(username, testid):
+	if username == session['username']:
+		cur = mysql.connection.cursor()
+		results = cur.execute('select users.name as name,users.username as username,test_id from studentTestInfo,users where test_id = %s and completed = 1 and studentTestInfo.username=users.username ', [testid])
+		results = cur.fetchall()
+		final = []
+		count = 1
+		for user in results:
+			score = marks_calc(user['username'], testid)
+			user['srno'] = count
+			user['marks'] = score
+			final.append([count, user['name'], score])
+			count+=1
+		if request.method =='GET':
+			results = sorted(results, key=operator.itemgetter('marks'))
+			return render_template('student_results.html', data=results)
+		else:
+			fields = ['Sr No', 'Name', 'Marks']
+			with open('static/' + testid + '.csv', 'w') as f:
+				writer = csv.writer(f)
+				writer.writerow(fields)
+				writer.writerows(final)
+			return send_file('static/' + testid + '.csv', as_attachment=True)
 
 @app.route('/<username>/tests-created')
 @is_logged
@@ -436,6 +465,14 @@ def confirm_email(token):
 			flash('Thank you for confirming your email address!', 'success')
 	
 		return redirect(url_for('index'))
+
+def marks_calc(username,testid):
+	if username == session['username']:
+		cur = mysql.connection.cursor()
+		results = cur.execute("select sum(marks) as totalmks from students s,questions q where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id and s.ans=q.ans", (username, testid))
+		results = cur.fetchone()
+		return results['totalmks']
+
 
 
 if __name__ == "__main__":

@@ -247,8 +247,8 @@ def create_test():
 			question = data['((QUESTION))']
 			correct_ans = data['((CORRECT_CHOICE)) (A/B/C/D)']
 			explanation = data['((EXPLANATION)) (OPTIONAL)']
-			cur.execute('INSERT INTO questions(test_id,qid,q,a,b,c,d,ans,marks) values(%s,%s,%s,%s,%s,%s,%s,%s,%s)', 
-				(test_id,no,question,a,b,c,d,correct_ans,marks))
+			cur.execute('INSERT INTO questions(test_id,qid,q,a,b,c,d,ans,marks,explanation) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)', 
+				(test_id,no,question,a,b,c,d,correct_ans,marks,explanation))
 			mysql.connection.commit()
 		start_date_time = form.start_date_time.data
 		end_date_time = form.end_date_time.data
@@ -319,11 +319,14 @@ def give_test():
 			password = data['password']
 			duration = data['duration']
 			start = data['start']
+			start = str(start)
 			end = data['end']
+			end = str(end)
 			if password == password_candidate:
 				now = datetime.now()
-				now = now.strftime("%Y/%m/%d %H:%M:%S")
-				if datetime.strptime(start,"%Y/%m/%d %H:%M:%S") < now and datetime.strptime(end,"%Y/%m/%d %H:%M:%S") > now:
+				now = now.strftime("%Y-%m-%d %H:%M:%S")
+				now = datetime.strptime(now,"%Y-%m-%d %H:%M:%S")
+				if datetime.strptime(start,"%Y-%m-%d %H:%M:%S") < now and datetime.strptime(end,"%Y-%m-%d %H:%M:%S") > now:
 					results = cur.execute('SELECT time_to_sec(time_left) as time_left,completed from studentTestInfo where username = %s and test_id = %s', (session['username'], test_id))
 					if results > 0:
 						results = cur.fetchone()
@@ -382,7 +385,7 @@ def check_result(username, testid):
 			results = cur.fetchone()
 			check = results['show_ans']
 			if check == 1:
-				results = cur.execute('SELECT q,marks,questions.ans as correct, students.ans as marked,a,b,c,d from students,questions where username = %s and students.test_id = questions.test_id and students.test_id = %s and students.qid=questions.qid', (username, testid))
+				results = cur.execute('SELECT q,explanation,marks,questions.qid as qid,questions.ans as correct, students.ans as marked,a,b,c,d from students,questions where username = %s and students.test_id = questions.test_id and students.test_id = %s and students.qid=questions.qid', (username, testid))
 				if results > 0:
 					results = cur.fetchall()
 					return render_template('tests_result.html', results= results)
@@ -390,6 +393,27 @@ def check_result(username, testid):
 				flash('You are not authorized to check the result', 'danger')
 	else:
 		return redirect(url_for('dashboard'))
+
+#tests==dict in tuple
+
+def totmarks(username,tests): 
+	cur = mysql.connection.cursor()
+	for test in tests:
+		testid = test['test_id']
+		results = cur.execute("select sum(marks) as totalmks from students s,questions q where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id and s.ans=q.ans", (username, testid))
+		results = cur.fetchone()
+		test['marks'] = results['totalmks']
+	print(tests)
+	return tests
+
+def marks_calc(username,testid):
+	if username == session['username']:
+		cur = mysql.connection.cursor()
+		results = cur.execute("select sum(marks) as totalmks from students s,questions q where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id and s.ans=q.ans", (username, testid))
+		results = cur.fetchone()
+		return results['totalmks']
+
+
 		
 @app.route('/<username>/tests-given')
 @is_logged
@@ -398,6 +422,7 @@ def tests_given(username):
 		cur = mysql.connection.cursor()
 		results = cur.execute('select distinct(test_id) from students where username = %s', [username])
 		results = cur.fetchall()
+		results=totmarks(username,results)
 		return render_template('tests_given.html', tests=results)
 	else:
 		flash('You are not authorized', 'danger')
@@ -465,14 +490,6 @@ def confirm_email(token):
 			flash('Thank you for confirming your email address!', 'success')
 	
 		return redirect(url_for('index'))
-
-def marks_calc(username,testid):
-	if username == session['username']:
-		cur = mysql.connection.cursor()
-		results = cur.execute("select sum(marks) as totalmks from students s,questions q where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id and s.ans=q.ans", (username, testid))
-		results = cur.fetchone()
-		return results['totalmks']
-
 
 
 if __name__ == "__main__":

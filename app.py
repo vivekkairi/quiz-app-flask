@@ -8,7 +8,7 @@ from functools import wraps
 from werkzeug.utils import secure_filename
 from docx import Document
 from coolname import generate_slug
-from datetime import timedelta
+from datetime import timedelta, datetime
 from flask_mail import Mail, Message
 from threading import Thread
 from flask import render_template_string
@@ -313,29 +313,34 @@ def give_test():
 			data = cur.fetchone()
 			password = data['password']
 			duration = data['duration']
+			start = data['start']
+			end = data['end']
 			if password == password_candidate:
-				session['allowed_test']=test_id
-				results = cur.execute('SELECT time_to_sec(time_left) as time_left,completed from studentTestInfo where username = %s and test_id = %s', (session['username'], test_id))
-				if results > 0:
-					results = cur.fetchone()
-					is_completed = results['completed']
-					if is_completed == 0:
-						time_left = results['time_left']
-						if time_left < duration:
-							duration = time_left
-							results = cur.execute('SELECT * from students where username = %s and test_id = %s', (session['username'], test_id))
-							marked_ans = {}
-							if results > 0:
-								results = cur.fetchall()
-								for row in results:
-									marked_ans[row['qid']] = row['ans']
-								marked_ans = json.dumps(marked_ans)
+				now = datetime.now()
+				now = now.strftime("%Y/%m/%d %H:%M:%S")
+				if datetime.strptime(start,"%Y/%m/%d %H:%M:%S") < now and datetime.strptime(end,"%Y/%m/%d %H:%M:%S") > now:
+					results = cur.execute('SELECT time_to_sec(time_left) as time_left,completed from studentTestInfo where username = %s and test_id = %s', (session['username'], test_id))
+					if results > 0:
+						results = cur.fetchone()
+						is_completed = results['completed']
+						if is_completed == 0:
+							time_left = results['time_left']
+							if time_left <= duration:
+								duration = time_left
+								results = cur.execute('SELECT * from students where username = %s and test_id = %s', (session['username'], test_id))
+								marked_ans = {}
+								if results > 0:
+									results = cur.fetchall()
+									for row in results:
+										marked_ans[row['qid']] = row['ans']
+									marked_ans = json.dumps(marked_ans)
+									#return redirect(url_for('test' , testid = test_id))
+						else:
+							flash('Test already given', 'success')
+							return redirect(url_for('give_test'))
 					else:
-						flash('Test already given', 'success')
-						return redirect(url_for('give_test'))
-				else:
-					cur.execute('INSERT into studentTestInfo (username, test_id,time_left) values(%s,%s,SEC_TO_TIME(%s))', (session['username'], test_id, duration))
-					mysql.connection.commit()
+						cur.execute('INSERT into studentTestInfo (username, test_id,time_left) values(%s,%s,SEC_TO_TIME(%s))', (session['username'], test_id, duration))
+						mysql.connection.commit()
 				return redirect(url_for('test' , testid = test_id))
 			else:
 				flash('Invalid password', 'danger')
@@ -352,12 +357,13 @@ def random_gen():
 		id = request.form['id']
 		print(id)
 		cur = mysql.connection.cursor()
-		results = cur.execute('SELECT count(*) from questions where test_id = %s', [id.split('-',1)[-1]])
+		results = cur.execute('SELECT count(*) from questions where test_id = %s', [id])
 		if results > 0:
 			data = cur.fetchone()
 			total = data['count(*)']
 			nos = list(range(1,int(total)+1))
 			random.Random(id).shuffle(nos)
+			print(nos)
 			cur.close()
 			return json.dumps(nos)
 
@@ -367,12 +373,12 @@ def random_gen():
 def check_result(username, testid):
 	if username == session['username']:
 		cur = mysql.connection.cursor()
-		results = cur.execute('SELECT * FROM teachers where username = %s and test_id = %s', (username, testid))
+		results = cur.execute('SELECT * FROM teachers where test_id = %s', [testid])
 		if results>0:
 			results = cur.fetchone()
 			check = results['show_ans']
 			if check == 1:
-				results = cur.execute('SELECT q,marks,questions.ans as correct, students.ans,a,b,c,d from students,questions where username = %s and students.test_id = questions.test_id and students.test_id = %s and students.qid=questions.qid', (username, testid))
+				results = cur.execute('SELECT q,marks,questions.ans as correct, students.ans as marked,a,b,c,d from students,questions where username = %s and students.test_id = questions.test_id and students.test_id = %s and students.qid=questions.qid', (username, testid))
 				if results > 0:
 					results = cur.fetchall()
 					return render_template('tests_result.html', results= results)
@@ -399,7 +405,7 @@ def tests_given(username):
 def tests_created(username):
 	if username == session['username']:
 		cur = mysql.connection.cursor()
-		results = cur.execute('select test_id from teachers where username = %s', [username])
+		results = cur.execute('select * from teachers where username = %s', [username])
 		results = cur.fetchall()
 		return render_template('tests_created.html', tests=results)
 	else:

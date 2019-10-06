@@ -1,0 +1,47 @@
+img {
+	display: block;
+	margin-bottom: 10%;
+}
+
+/*
+.card {
+	align-items: center;
+	margin: 0 10%;
+	background-color: white;
+	border-radius: 7%;
+}
+*/
+.mysec img{
+	margin: 0 auto;
+	display: block;
+	width: 60%;
+}
+.mysec .col-3 img{
+	width: 80%;
+}
+.mysec .col-3{
+	padding: 30px;
+	border-radius: none;
+}
+
+.mybtn{
+	color: #fff;
+	box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+	text-align: center;
+	border:none;
+	border-radius: 100px !important;
+	padding: 10px 20px;
+	margin-top: 15px;
+
+}
+#teacher-section {
+	margin-top: 5%;
+}
+
+#student-section {
+	margin-top: 5%;
+}
+
+.btn-primary {
+	border-radius: 20%;
+}

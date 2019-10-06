@@ -1,6 +1,23 @@
 {% extends 'layout.html' %}
 {% block body %}
-    {% for test in tests %}
-        <div><span>{{test['test_id']}}</span> <button>Results</button></div>
-    {% endfor %}
+    <table class="table">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">Test ID</th>
+                <th scope="col">Password</th>
+                <th scope="col"></th>
+             </tr>
+        </thead>
+        <tbody>
+            {% for test in tests %}
+                <tr>
+                    <th>{{test['test_id']}}</th>
+                    <th>{{test['password']}}</th>
+                    <th><div class="btn btn-primary btn-md">Result</div></th>
+                </tr>
+            {% endfor %}
+            
+        </tbody>
+    
+    </table>
 {% endblock %}1

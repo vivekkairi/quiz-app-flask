@@ -1,15 +1,54 @@
 {% extends 'layout.html' %}
 
-{% block body %}
-  <h1>Dashboard <small> Welcome {{session.username}}</small></h1>
-  <div class="row">
-  	<div class="col-sm-6">
-		<a href="/create-test"><div class="btn btn-primary" id="teacher">Teacher</div></a>
-		<div><a href="/{{session.username}}/tests-created"><div class="btn btn-primary">View all tests</div></a></div>
-  	</div>
-  	<div class="col-sm-6">
-		<a href="/give-test"><div class="btn btn-primary" id="student">Student</div></a>
-		<div></div><a href="/{{session.username}}/tests-given"><div class="btn btn-primary">View all tests</div></a></div>
-  	</div>
-  </div>
+{% block head %}
+	<link rel="stylesheet" href="static/dashboard.css">
 {% endblock %}
+
+{% block body %}
+
+   <h1 align="center">Welcome {{session.username}}</h1>
+  <div class="row mysec" id="student-section">
+	 	<div class="col-6 ">
+			<img src="static/student.svg" alt="" width="280px">
+	  	</div>
+	  	<div class="col-3 box">
+			<div class="card shadow">
+				<div class="card-body">
+					<img src="static/laptop.png" alt="" width="100px">
+					<center><a href="/give-test" class="btn btn-primary mybtn">Give Test</a></center>
+				</div>
+			</div>
+	  	</div>
+	  	<div class="col-3 box">
+			<div class="card shadow">
+				<div class="card-body">
+					<img src="static/result.png" alt="" width="100px">
+					<center><a  href="/{{session.username}}/tests-given" class="btn btn-primary mybtn">Results</a></center>
+				</div>
+			</div>
+		</div>
+  </div>
+  <div class="row mysec" id="teacher-section">
+		<div class="col-3 box">
+			<div class="card shadow">
+				<div class="card-body">
+					<img src="static/research.png" alt="" width="100px">
+					<center><a href="/{{session.username}}/tests-created" class="btn btn-primary mybtn">Student Results</a></center>
+				</div>
+			</div>
+		</div>
+		<div class="col-3 box">
+			<div class="card shadow">
+				<div class="card-body">
+					<img src="static/notepad.png" alt="" width="100px">
+					<center><a href="/create-test" class="btn btn-primary mybtn">Create Test</a></center>
+				</div>
+			</div>
+	   </div>
+	   <div class="col-6">
+			<img src="static/teacher.svg" alt="" width="300px" style="margin-top: 50px;">
+		</div>
+ </div>
+{% endblock %}
+
+

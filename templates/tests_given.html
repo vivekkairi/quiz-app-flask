@@ -1,6 +1,6 @@
 {% extends 'layout.html' %}
 {% block body %}
     {% for test in tests %}
-        <div><span>{{test['test_id']}}</span> <button>Check Result</button></div>
+        <div><span>{{test['test_id']}}</span> <a href="/{{session.username}}/{{test['test_id']}}"><button>Check Result</button></a></div>
     {% endfor %}
 {% endblock %}1

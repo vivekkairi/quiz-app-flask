@@ -1,0 +1,76 @@
+label {
+    float: left;
+}
+.thim-link-login{
+   font-size: 14px;
+   padding-left: 20px;
+   padding-right: 20px;
+   display: inline-block;
+   background: #fff;
+   letter-spacing: .3px;
+   text-align: left;
+   height: 35px;
+   line-height: 35px;
+   font-weight: 300;
+   font-style: normal;
+   font-stretch: normal;
+  /* -webkit-border-radius: 20px;
+   -moz-border-radius: 20px; */
+   border-radius: 20px;
+}
+.loginlink{
+
+   color: #ff6666 !important;
+}
+
+h1{
+   margin-top: 2%;
+   text-align: center;
+   color: white;
+/*   padding-top: 20%;
+   margin-top:  100px; 
+   color:#ff6666; 
+   height: 300px;
+   width: 750px; */
+}
+
+.form-group{
+   margin-top: 2%;
+   width: 75%;
+}
+
+.login-box{
+   height: 550px;
+   width: 800px;
+   border: #ff6666 solid 5px;
+   padding-top: 2%;
+   border-radius: 0px 0px 20px 20px;
+}
+
+.row{
+   border-radius: 20px 20px 0px 0px;
+   border: #ff6666 solid 5px;
+   width: 800px;
+   background-color: #ff6666;
+   /*padding-top: 20%; */ 
+   margin-top: 50px;
+}
+
+.btn{
+   margin-top: 1%;
+   margin-bottom: 1.5%; 
+   width: 150px;
+}
+
+#acc{
+   margin: 3% 0px 0px 0px ; 
+}
+
+#register{
+   margin: 3% 0px 0px 0px;
+   color: #ff6666 !important;
+}
+
+p {
+   margin-top: 2%;
+}

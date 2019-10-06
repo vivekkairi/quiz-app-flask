@@ -1,32 +1,34 @@
-
-<nav class="navbar navbar-default">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="#">MyFlaskApp</a>
-        </div>
-        <div id="navbar" class="">
-          <ul class="nav navbar-nav">
-            <li><a href="/">Home</a></li>
-            <li><a href="/about">About</a></li>
-            <li><a href="/articles">Articles</a></li>
-          </ul>
-
-          <ul class="nav navbar-nav navbar-right">
-            {% if session.logged_in %}
-              <li><a href="/dashboard">Dashboard</a></li>
-              <li><a href="/logout">Logout</a></li>
-            {% else %}
-              <li><a href="/register">Register</a></li>
-              <li><a href="/login">Login</a></li>
-            {% endif %}
-
-          </ul>
-        </div><!--/.nav-collapse -->
-      </div>
-    </nav>
+<nav class="navbar navbar-expand-lg navbar-light bg-light shadow-lg">
+  <div class="container">
+    <a class="navbar-brand" href="#">MyQuizApp</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+          <a href="/" class="nav-link">Home</a>
+        </li>
+        <li class="nav-item">
+          <a href="/about" class="nav-link">About</a>
+        </li>
+      </ul>
+      <ul class="navbar-nav ml-auto">
+        {% if session.logged_in %}
+          <li class="nav-item ">
+            <a href="/dashboard" class="nav-link">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a href="/logout" class="nav-link">Logout</a>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a href="/register" class="nav-link">Register</a></li>
+          <li class="nav-item">
+            <a href="/login" class="nav-link">Login</a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>

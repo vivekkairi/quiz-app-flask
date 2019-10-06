@@ -1,19 +1,47 @@
 {% extends 'layout.html' %}
 
+
+{% macro show_opt(result,opt) %}
+  <!-- if correct option -- green -->
+  {% if result.correct|string() == opt|upper %}
+      <td style="background-color: rgba(0,128,0,0.3);"> <b>{{opt|upper}}</b>. {{result[opt]}}</td>
+  {% else %} 
+      <!-- if incorrect option -- red -->
+        {% if result.marked|string()|upper == opt|upper %}
+            <td style="background-color: rgba(128,0,0,0.3);"><b>{{opt|upper}}</b>. {{result[opt]}}</td>
+        {% else %}
+            <td><b>{{opt|upper}}</b>. {{ result[opt] }}</td>
+        {% endif %}
+  {% endif %}
+{% endmacro %}
+
+<!-- display abcd also before options -->
+
+
 {% block body %}
-    <table>
-        {% for result in results%}
-        <tr>
-            <td>{{result['q']}} </td>
+    {% for result in results%}
+        <table style="margin-bottom: 40px;">
+            <tr>
+                <td>Question No. {{ result.qid }}</td>
+                <td>Marks: {{ result.marks }}</td>
             </tr>
-        <tr>
-            <td>{{result['a']}}</td>
-            <td>{{result['c']}}</td>
-        </tr>
-        <tr>
-            <td>{{result['b']}}</td>
-            <td>{{result['d']}}</td>
+            <tr>
+                <td colspan="2">
+                    <pre style="border: 0px;" class="prettyprint" id="que"> {{result['q']}} </pre>
+                </td>
             </tr>
-        {% endfor %}
-    </table> 
-{% endblock %}1
+            <tr>
+                {{ show_opt(result,'a') }}
+                {{ show_opt(result,'b') }}
+            </tr>
+            <tr>
+                {{ show_opt(result,'c') }}
+                {{ show_opt(result,'d') }}
+            </tr>
+        </table> 
+    {% endfor %}
+
+<script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='disp.css') }}">
+
+{% endblock %}

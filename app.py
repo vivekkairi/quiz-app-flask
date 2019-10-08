@@ -21,6 +21,8 @@ import operator
 from wtforms_components import TimeField
 from wtforms.fields.html5 import DateField
 from wtforms.validators import ValidationError
+import socket
+from emailverifier import Client
 
 app = Flask(__name__)
 app.secret_key= 'huihui'
@@ -62,17 +64,28 @@ Please click the link below to confirm your email address and
 activate your account:
   
 <a href="{{ confirm_url }}">{{ confirm_url }}</a>
- 
+ <p>
 --
-Questions? Comments? Email nickqwerty76@gmail.com.
+Questions? Comments? Email nickqwerty76@gmail.com.</p>
 '''
+
+#email verifier api key
+client = Client('at_rFxZz7zEX8CO8V5IDBfzexOe2fW8b')
+
+
+
+def get_local_ip():	
+	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	s.connect(('8.8.8.8', 1))
+	local_ip_address = s.getsockname()[0]
+	return local_ip_address
+
 
 def send_email(recipients,html_body):
 	try:
 		msg = Message('Confirm Your Email Address',
 		  sender="nickqwerty76@gmail.com",
 		  recipients=recipients)
-		# msg.body = "Yo!\nHave you heard the good word of Python???"
 		msg.html = html_body
 		send_async_email(app, msg)
 		# return 'Mail sent!'
@@ -88,11 +101,16 @@ def send_confirmation_email(user_email):
 	confirm_url = url_for('confirm_email',
 		token=confirm_serializer.dumps(user_email, salt='email-confirmation-salt'),
 		_external=True)
- 
+	# local_ip = get_local_ip()
+	# x=confirm_url.split("127.0.0.1:5000")
+	# print(x)
+	# confirm_url = x[0] + local_ip + x[1]
 	html = render_template_string(htmlbody, confirm_url=confirm_url)
 
 	send_email([user_email], html)
 
+
+# test this function whether correct link is produced##############
 
 #init Mysql
 mysql = MySQL(app)
@@ -178,15 +196,13 @@ def register():
 		name = form.name.data 
 		email = form.email.data
 
-		# check if email is valid, verify
+		#email verifier	
+		data = client.get(email)
+		if str(data.smtp_check) == 'False':
+			flash('Invalid email, please provide a valid email address','danger')
+			return render_template('register.html', form=form)
 
-		# is_valid = validate_email(email,verify=True)
-		# if is_valid == False:
-		# 	flash('Wrong email','danger')
-		# do something
-	
 		send_confirmation_email(email)
-		# first verify in fn then do query
 
 		username = form.username.data
 		password = sha256_crypt.encrypt(str(form.password.data))
@@ -545,4 +561,4 @@ def confirm_email(token):
 
 
 if __name__ == "__main__":
-	app.run(debug=True)
+	app.run(host = "0.0.0.0",debug=True)

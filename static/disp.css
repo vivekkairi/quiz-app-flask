@@ -2,6 +2,7 @@ table, tr, td{
 	border: 1px solid gray;
 }
 table{
+    table-layout:fixed;
 	width: 100%;
 }
 td{
@@ -13,6 +14,7 @@ td{
 }
 #que{
 	font-size: 18px;
+	word-wrap: break-word;
 }
 footer {
     position: fixed;

@@ -1,17 +1,19 @@
 {% extends 'layout.html' %}
 {% block body %}
 <style type="text/css">
-	td{
+	td,th {
 		padding: 10px;
 		text-align: center;
 	}
 </style>
-<table border="1" width="70%" align="center">
-	<tr align="center">
-		<td>Test ID</td>
-		<td>Marks</td>
-		<td></td>
-	</tr>
+<table class="table" border="1" width="70%" align="center">
+    <thead class="thead-dark">
+    	<tr>
+    		<th>Test ID</th>
+    		<th>Marks</th>
+    		<th></th>
+    	</tr>
+    </thead>
     {% for test in tests %}
     <tr>	
     	<td>{{test['test_id']}}</td> 

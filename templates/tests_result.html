@@ -3,18 +3,26 @@
 
 {% macro show_opt(result,opt) %}
   <!-- if correct option -- green -->
+
   {% if result.correct|string() == opt|upper %}
-      <td style="background-color: rgba(0,128,0,0.3);"> <b>{{opt|upper}}</b>. {{result[opt]}}</td>
+    {% if result.marked|string() == '0' %}
+    <td style="background-color: rgba(67,99,216,0.5);"> <b>{{opt|upper}}</b>. {{result[opt]}}</td>
+    {% else %}
+
+      <td style="background-color: rgba(0,255,0,0.4);"> <b>{{opt|upper}}</b>. {{result[opt]}}</td>
+    {% endif %}
   {% else %} 
       <!-- if incorrect option -- red -->
         {% if result.marked|string()|upper == opt|upper %}
-            <td style="background-color: rgba(128,0,0,0.3);"><b>{{opt|upper}}</b>. {{result[opt]}}</td>
+            <td style="background-color: rgba(255,0,0,0.4);"><b>{{opt|upper}}</b>. {{result[opt]}}</td>
         {% else %}
             <td><b>{{opt|upper}}</b>. {{ result[opt] }}</td>
         {% endif %}
   {% endif %}
 {% endmacro %}
 
+
+<!-- diff color for nt attemptd -->
 
 {% block body %}
     {% for result in results%}

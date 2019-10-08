@@ -5,6 +5,8 @@
             <tr>
                 <th scope="col">Test ID</th>
                 <th scope="col">Password</th>
+                <th scope="col">Subject</th>
+                <th scope="col">Topic</th>
                 <th scope="col"></th>
              </tr>
         </thead>
@@ -13,7 +15,9 @@
                 <tr>
                     <th>{{test['test_id']}}</th>
                     <th>{{test['password']}}</th>
-                    <th><a class="btn btn-primary btn-md" href=/{{session.username}}/tests-created/{{test['test_id']}}>Result</a></th>
+                    <th>{{test['subject']}}</th>
+                    <th>{{test['topic']}}</th>
+                    <th><a class="btn btn-primary btn-md mx-2" href=/{{session.username}}/tests-created/{{test['test_id']}}>Result</a><a class="btn btn-primary" href="/{{session.username}}/tests-created/{{test['test_id']}}/questions">Questions</a></th>
                 </tr>
             {% endfor %}
             

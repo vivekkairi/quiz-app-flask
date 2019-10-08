@@ -8,15 +8,19 @@
 </style>
 <table class="table" width="70%" align="center">
 	<thead class="thead-dark">
-		<tr align="center">
-			<td>Test ID</td>
-			<td>Marks</td>
-			<td></td>
+			<td scope="col">Test ID</td>
+			<td scope="col">Subject</td>
+			<td scope="col">Topic</td>
+			<td scope="col">Marks</td>
+			<td scope="col"></td>
 		</tr>
 	</thead>
+	<tbody>
     {% for test in tests %}
     <tr>	
-    	<td>{{test['test_id']}}</td> 
+		<td>{{test['test_id']}}</td> 
+		<td>{{test['subject']}}</td> 
+		<td>{{test['topic']}}</td> 
     	<td>{{test['marks']}}</td> 
     	<td>
     		<a href="/{{session.username}}/{{test['test_id']}}">
@@ -25,6 +29,6 @@
     	</td>
     </tr>
     {% endfor %}
-
+	</tbody>
 </table>
 {% endblock %}

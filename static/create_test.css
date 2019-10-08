@@ -5,17 +5,16 @@
 
 #heading{
     border-radius: 20px 20px 0px 0px;
-    border: #ff6666 solid 5px;
+    border: #6a63dd solid 5px;
     width: 800px;
-    background-color: #ff6666;
+    background-color: #6a63dd;
     /*padding-top: 20%; */ 
     margin-top: 50px;
  }
 
  .login-box{
-    height: 550px;
     width: 800px;
-    border: #ff6666 solid 5px;
+    border: #6a63dd solid 5px;
     padding-top: 2%;
     border-radius: 0px 0px 20px 20px;
     padding: 20px;

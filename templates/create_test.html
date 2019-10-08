@@ -6,11 +6,17 @@
 {% from "includes/_formhelpers.html" import render_field %}
 <div id="heading">
   <div class="col">
-    <h1>Register</h1>
+    <h1>Create Test</h1>
   </div>
 </div>
 <div class="login-box well">
   <form method="POST" action="" enctype="multipart/form-data">
+    <div class="form-group">
+      {{render_field(form.subject, class="form-control")}}
+    </div>
+    <div class="form-group">
+      {{render_field(form.topic, class="form-control")}}
+    </div>
     <div class="row">
       <div class="form-group col-6">
         {{render_field(form.start_date, class="form-control")}}
@@ -35,7 +41,8 @@
     </div>
     <div class="form-group">
     	{{form.hidden_tag()}}
-      	{{render_field(form.doc, class="form-control-file")}}
+        {{render_field(form.doc, class="form-control-file")}}
+        <a href="static/template.docx" class="btn btn-primary" style="margin-top: 10px;">Download Template</a>
     </div>
     <div class="form-check">
       {{render_field(form.show_result, class="form-check-input")}}

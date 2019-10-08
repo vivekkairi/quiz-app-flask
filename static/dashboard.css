@@ -45,3 +45,6 @@ img {
 .btn-primary {
 	border-radius: 20%;
 }
+.btn-primary:hover {
+	background-color: #6a63dd;
+}

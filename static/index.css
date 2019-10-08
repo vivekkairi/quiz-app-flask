@@ -1,0 +1,67 @@
+.container-fluid{
+   background-color: #6A63DD !important;
+   height: 875px;
+   margin: 0px 20px 0px 20px;
+}
+
+body{
+
+   background-color: white !important;
+}
+
+
+.thim-link-login{
+   font-size: 14px;
+   padding-left: 20px;
+   padding-right: 20px;
+   display: inline-block;
+   background: #fff;
+   letter-spacing: .3px;
+   text-align: left;
+   height: 35px;
+   line-height: 35px;
+   font-weight: 300;
+   font-style: normal;
+   font-stretch: normal;
+  /* -webkit-border-radius: 20px;
+   -moz-border-radius: 20px; */
+   border-radius: 20px;
+}
+
+.loginlink{
+   color: #6a63dd !important;
+}
+
+#welcome{
+   margin-top: 50px;
+   font-size: 50px;
+}
+
+#features{
+   margin-top: 50px;
+}
+
+.col-sm-4{
+   padding: 0px 50px 0px 50px;
+   margin: 0px 0px 0px 0px;
+   height: 400px;
+   width: 100px;
+}
+#icon{
+   margin-top: 200px;
+   margin-left: 625px;
+}
+
+#tagline{
+   font-size: 1.5em;
+   line-height: 65px;
+   margin-left: 65px;
+   font-family: 'Roboto Condensed', sans-serif;
+}
+#tag{
+   margin-top: 5px;
+   margin-left: 65px;
+   font-size: 25px;
+   line-height: 25px;
+   font-family: 'Roboto Condensed', sans-serif;
+}

@@ -1,0 +1,47 @@
+{% extends 'layout.html' %}
+
+
+{% macro show_opt(result,opt) %}
+  <!-- if correct option -- green -->
+
+  {% if result.correct|string() == opt|upper %}
+    <td style="background-color: rgba(0,255,0,0.4);"> <b>{{opt|upper}}</b>. {{result[opt]}}</td>
+  {% else %}
+    <td > <b>{{opt|upper}}</b>. {{result[opt]}}</td>
+  {% endif %}
+{% endmacro %}
+
+
+<!-- diff color for nt attemptd -->
+
+{% block body %}
+    {% for result in results%}
+        <table style="margin-bottom: 40px;">
+            <tr>
+                <td>Question No. {{ result.qid }}</td>
+                <td>Marks: {{ result.marks }}</td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <pre style="border: 0px;" class="prettyprint" id="que"> {{result['q']}} </pre>
+                </td>
+            </tr>
+            <tr>
+                {{ show_opt(result,'a') }}
+                {{ show_opt(result,'b') }}
+            </tr>
+            <tr>
+                {{ show_opt(result,'c') }}
+                {{ show_opt(result,'d') }}
+            </tr>
+            <tr>
+                <td colspan="2"><b>Explanation</b>:  {{result.explanation}} </td>
+    
+            </tr>
+        </table> 
+    {% endfor %}
+
+<script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='disp.css') }}">
+
+{% endblock %}

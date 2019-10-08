@@ -1,0 +1,38 @@
+
+.login-box{
+    width: 600px;
+    border: #6a63dd solid 5px;
+    padding-top: 2%;
+    border-radius: 0px 0px 20px 20px;
+ }
+
+ .form-group{
+
+    margin-top: 2%;
+    width: 75%;
+ 
+ }
+
+ .row{
+    border-radius: 20px 20px 0px 0px;
+    border: #6a63dd solid 5px;
+    width: 600px;
+    background-color: #6a63dd;
+    /*padding-top: 20%; */ 
+    margin-top: 200px;
+ }
+ 
+ .loginlink{
+
+    color: #6a63dd !important;
+ }
+ 
+ h1{
+    margin-top: 2%;
+    text-align: center;
+    color: white;
+ /*   margin-top:  100px; 
+    color:#6a63dd; 
+    height: 300px;
+    width: 750px; */
+ }

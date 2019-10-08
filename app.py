@@ -131,8 +131,9 @@ def doctodict(filepath):
 class RegisterForm(Form):
 	name = StringField('Name', [validators.Length(min=3, max=50)])
 	username = StringField('Username', [validators.Length(min=4,max=25)])
-	email = StringField('Email', [validators.Length(min=6,max=50)])
+	email = StringField('Email', [validators.Email()])
 	password = PasswordField('Password', [
+			validators.Regexp("^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$", message="Password should contain min 8 characters including 1 letter and 1 number."),
 			validators.DataRequired(),
 			validators.EqualTo('confirm', message="Password do not match")
 		])
@@ -140,7 +141,8 @@ class RegisterForm(Form):
 
 
 class UploadForm(FlaskForm):
-
+	subject = StringField('Subject')
+	topic = StringField('Topic')
 	doc = FileField('Docx Upload', validators=[FileRequired()])
 	start_date = DateField('Start Date')
 	start_time = TimeField('Start Time', default=datetime.now())
@@ -169,7 +171,7 @@ class TestForm(Form):
 
 @app.route('/')
 def index():
-	return render_template('layout.html')
+	return render_template('index.html')
 
 @app.route('/register', methods=['GET','POST'])
 def register():
@@ -278,11 +280,14 @@ def create_test():
 			start_date_time = str(start_date) + " " + str(start_time)
 			end_date_time = str(end_date) + " " + str(end_time)
 			show_result = form.show_result.data
-			duration = form.duration.data
+			duration = int(form.duration.data)*60
 			password = form.password.data
-			
-			cur.execute('INSERT INTO teachers (username, test_id, start, end, duration, show_ans, password) values(%s,%s,%s,%s,%s,%s,%s)',
-				(dict(session)['username'], test_id, start_date_time, end_date_time, duration, show_result, password))
+			subject = form.subject.data
+			topic = form.topic.data
+			print(subject)
+			print(topic)
+			cur.execute('INSERT INTO teachers (username, test_id, start, end, duration, show_ans, password, subject, topic) values(%s,%s,%s,%s,%s,%s,%s, %s,%s)',
+				(dict(session)['username'], test_id, start_date_time, end_date_time, duration, show_result, password, subject, topic))
 			mysql.connection.commit()
 			cur.close()
 			flash(f'Test ID: {test_id}', 'success')
@@ -328,15 +333,18 @@ def test(testid):
 			cur.close()
 		elif flag=='time':
 			time_left = request.form['time']
-			cur.execute('UPDATE studentTestInfo set time_left=SEC_TO_TIME(%s) where test_id = %s and username = %s', (time_left, testid, session['username']))
-			mysql.connection.commit()
-			cur.close()
-		else:
+			try:
+				cur.execute('UPDATE studentTestInfo set time_left=SEC_TO_TIME(%s) where test_id = %s and username = %s and completed=0', (time_left, testid, session['username']))
+				mysql.connection.commit()
+				cur.close()
+			except:
+				pass
+		else:			
 			cur.execute('UPDATE studentTestInfo set completed=true and time_left="00:00:00" where test_id = %s and username = %s', (testid, session['username']))
 			mysql.connection.commit()
 			cur.close()
 			flash("Time Over", 'info')
-			return redirect(url_for('dashboard'))
+			return json.dumps({'sql':'fired'})
 
 
 @app.route("/give-test", methods = ['GET', 'POST'])
@@ -362,7 +370,6 @@ def give_test():
 				now = now.strftime("%Y-%m-%d %H:%M:%S")
 				now = datetime.strptime(now,"%Y-%m-%d %H:%M:%S")
 				if datetime.strptime(start,"%Y-%m-%d %H:%M:%S") < now and datetime.strptime(end,"%Y-%m-%d %H:%M:%S") > now:
-					print("Inside")
 					results = cur.execute('SELECT time_to_sec(time_left) as time_left,completed from studentTestInfo where username = %s and test_id = %s', (session['username'], test_id))
 					if results > 0:
 						results = cur.fetchone()
@@ -385,6 +392,21 @@ def give_test():
 					else:
 						cur.execute('INSERT into studentTestInfo (username, test_id,time_left) values(%s,%s,SEC_TO_TIME(%s))', (session['username'], test_id, duration))
 						mysql.connection.commit()
+						results = cur.execute('SELECT time_to_sec(time_left) as time_left,completed from studentTestInfo where username = %s and test_id = %s', (session['username'], test_id))
+						if results > 0:
+							results = cur.fetchone()
+							is_completed = results['completed']
+							if is_completed == 0:
+								time_left = results['time_left']
+								if time_left <= duration:
+									duration = time_left
+									results = cur.execute('SELECT * from students where username = %s and test_id = %s', (session['username'], test_id))
+									marked_ans = {}
+									if results > 0:
+										results = cur.fetchall()
+										for row in results:
+											marked_ans[row['qid']] = row['ans']
+										marked_ans = json.dumps(marked_ans)
 				else:
 					if datetime.strptime(start,"%Y-%m-%d %H:%M:%S") > now:
 						flash(f'Test start time is {start}', 'danger')
@@ -437,6 +459,7 @@ def check_result(username, testid):
 					return render_template('tests_result.html', results= results)
 			else:
 				flash('You are not authorized to check the result', 'danger')
+				return redirect(url_for('tests_given',username = username))
 	else:
 		return redirect(url_for('dashboard'))
 
@@ -451,7 +474,6 @@ def totmarks(username,tests):
 			and s.ans=q.ans", (username, testid))
 		results = cur.fetchone()
 		test['marks'] = results['totalmks']
-	print(tests)
 	return tests
 
 def marks_calc(username,testid):
@@ -470,7 +492,7 @@ def marks_calc(username,testid):
 def tests_given(username):
 	if username == session['username']:
 		cur = mysql.connection.cursor()
-		results = cur.execute('select distinct(test_id) from students where username = %s', [username])
+		results = cur.execute('select distinct(students.test_id),subject,topic from students,teachers where students.username = %s and students.test_id=teachers.test_id', [username])
 		results = cur.fetchall()
 		results=totmarks(username,results)
 		return render_template('tests_given.html', tests=results)
@@ -483,9 +505,7 @@ def tests_given(username):
 def student_results(username, testid):
 	if username == session['username']:
 		cur = mysql.connection.cursor()
-		results = cur.execute('select users.name as name,users.username as\
-		 username,test_id from studentTestInfo,users where test_id = %s and\
-		  completed = 1 and studentTestInfo.username=users.username ', [testid])
+		results = cur.execute('select users.name as name,users.username as username,test_id from studentTestInfo,users where test_id = %s and completed = 1 and studentTestInfo.username=users.username ', [testid])
 		results = cur.fetchall()
 		final = []
 		count = 1
@@ -505,6 +525,24 @@ def student_results(username, testid):
 				writer.writerow(fields)
 				writer.writerows(final)
 			return send_file('static/' + testid + '.csv', as_attachment=True)
+
+@app.route('/<username>/tests-created/<testid>/questions', methods = ['POST','GET'])
+@is_logged
+def questions(username, testid):
+	if username == session['username']:
+		cur = mysql.connection.cursor()
+		results = cur.execute('SELECT * FROM teachers where test_id = %s', [testid])
+		if results>0:
+			results = cur.fetchone()
+			results = cur.execute('select explanation,q,a,b,c,d,marks,q.qid as qid, \
+				q.ans as correct, ifnull(s.ans,0) as marked from questions q left join \
+				students s on  s.test_id = q.test_id and s.test_id = %s \
+				and s.username = %s and s.qid = q.qid group by q.qid \
+				order by LPAD(lower(q.qid),10,0) asc', (testid, username))
+			if results > 0:
+				results = cur.fetchall()
+				return render_template('disp_questions.html', results= results)
+
 
 @app.route('/<username>/tests-created')
 @is_logged
@@ -540,7 +578,7 @@ def confirm_email(token):
 			mysql.connection.commit()
 			cur.close()
 			flash('Thank you for confirming your email address!', 'success')
-	
+			return redirect(url_for('login'))
 		return redirect(url_for('index'))
 
 

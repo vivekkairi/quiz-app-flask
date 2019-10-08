@@ -356,7 +356,7 @@ def test(testid):
 			except:
 				pass
 		else:			
-			cur.execute('UPDATE studentTestInfo set completed=true and time_left="00:00:00" where test_id = %s and username = %s', (testid, session['username']))
+			cur.execute('UPDATE studentTestInfo set completed=1,time_left=sec_to_time(0) where test_id = %s and username = %s', (testid, session['username']))
 			mysql.connection.commit()
 			cur.close()
 			flash("Time Over", 'info')

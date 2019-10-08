@@ -85,13 +85,13 @@ function startTimer(duration, display) {
 
 function finish_test() {
     $('#msg').addClass('alert-info');
-    $('#msg').append("Test Over");
+    $('#msg').append("Test submitted successfully");
     $.ajax({
         type: "POST",
         dataType: "json",
         data: {flag: 'completed'},
         success: function(data) {
-            window.location.href('/dashboard');
+            window.location.replace('/dashboard');
         }
     });
     
@@ -180,13 +180,14 @@ $('#questions').on('click', function(e){
         var color = '';
         var status = data[i].status;
         if(status == NOT_MARKED)
-            color = '#7595d9';
+            color = '#1976D2';
         else if(status == SUBMITTED)
             color = '#42ed62';
         else if(status == BOOKMARKED || status == SUBMITTED_BOOKMARKED)
             color = '#e6ed7b';
-        else 
-            color = 'red';
+        else{
+            color = '#f44336';
+        }
         j = i<10 ? "0" + i: i
         $('#question-list').append('<div class="question" style="background-color:' + color + '; color:white;">' + j + '</div>');
     }
@@ -235,7 +236,7 @@ $('#finish').on("click", function(e) {
     var remaining = nos.length - count;
     if(submit_overlay_display) {
         document.getElementById("submit-overlay").style.display = "block";
-        $('#submit-overlay').append('<div style="background-color:white; display: inline-block;/*! margin: auto; *//*! margin: 0 auto; */position: absolute;left: 40%;top: 33%;padding: 10PX;" align="center"><table class="table mx-auto" style="width:50%;"> <tr><td>Total Questions</td><td>Attempted</td><td>Remaining</td></tr><tr><td>'+ nos.length +'</td><td>'+ count +'</td><td>'+ remaining +'</td></tr></table> <a class="btn btn-primary" onclick="finish_test();">Submit Test</a></div>');
+        $('#submit-overlay').append('<div style="background-color:white; display: inline-block;/*! margin: auto; *//*! margin: 0 auto; */position: absolute;left: 40%;top: 33%;padding: 10PX; width:30%;" align="center"><table class="table"> <tr><td>Total Questions</td><td>Attempted</td><td>Remaining</td></tr><tr><td>'+ nos.length +'</td><td>'+ count +'</td><td>'+ remaining +'</td></tr></table> <a class="btn btn-primary" onclick="finish_test();">Submit Test</a></div>');
         submit_overlay_display=false;
     } else {
         document.getElementById("submit-overlay").style.display = "none";
@@ -267,6 +268,6 @@ var make_array = function() {
     }
 }
 
-window.addEventListener('blur', function() { 
-    window.location.replace('/dashboard');
- });
+//window.addEventListener('blur', function() { 
+ //   window.location.replace('/dashboard');
+ //});

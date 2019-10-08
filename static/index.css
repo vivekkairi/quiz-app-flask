@@ -12,44 +12,47 @@ body{
 
 .thim-link-login{
    font-size: 14px;
-   padding-left: 20px;
-   padding-right: 20px;
-   display: inline-block;
-   background: #fff;
-   letter-spacing: .3px;
-   text-align: left;
-   height: 35px;
-   line-height: 35px;
-   font-weight: 300;
-   font-style: normal;
-   font-stretch: normal;
-  /* -webkit-border-radius: 20px;
-   -moz-border-radius: 20px; */
-   border-radius: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    display: inline-block;
+    background: #fff;
+    letter-spacing: .3px;
+    text-align: left;
+    height: 35px;
+    line-height: 35px;
+    font-weight: 300;
+    font-style: normal;
+    font-stretch: normal;
+    border-radius: 20px;
 }
 
 .loginlink{
-   color: #6a63dd !important;
+   color: #6D75F1 !important;
 }
 
 #welcome{
    margin-top: 50px;
-   font-size: 50px;
+   font-size: 3em;
+   font-family: 'Roboto Condensed', sans-serif;
+
 }
 
 #features{
    margin-top: 50px;
 }
 
-.col-sm-4{
+.container.col-sm-4{
    padding: 0px 50px 0px 50px;
-   margin: 0px 0px 0px 0px;
-   height: 400px;
+   margin: 0px 0px 10px 0px;
+   height: 350px;
    width: 100px;
+   font-size: 1.1em;
+   font-family: 'Roboto Condensed', sans-serif;
 }
 #icon{
    margin-top: 200px;
    margin-left: 625px;
+   margin-right: 150px;
 }
 
 #tagline{
@@ -64,4 +67,61 @@ body{
    font-size: 25px;
    line-height: 25px;
    font-family: 'Roboto Condensed', sans-serif;
+}
+
+span{
+   font-family: 'Love Ya Like A Sister', cursive;
+}
+.grid12-6 img{
+   height: 500px;
+   width: 100%;
+}
+
+.grid12-6{
+  position:relative;
+  width: 100%;
+  margin-bottom: 30px;
+  margin-top: 20px;
+}
+.grid12-6 .inner_box{
+  position:absolute;
+  background:rgba(255,255,255,0.5);
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  padding:35px;
+  text-align:center;
+  height: 200px;
+}
+.grid12-6 .inner_box p{
+  font-family: 'Roboto Condensed', sans-serif;
+  font-weight: bold;
+  text-align:center;
+  font-size:2.5em;
+  color:black;
+
+}
+.grid12-6 .inner_box button{
+  background-color: #6D75F1 !important;
+  color:#fff;
+  text-transform:uppercase;
+  font-weight:bold;
+  font-size:20px;
+  border:none;
+  padding:10px 30px;
+  width: 300px;
+}
+.row .col-sm-4 p{
+   font-size: 1.1em;
+   font-family: 'Roboto Condensed', sans-serif;
+}
+
+.row .col-sm-4 p b{
+   font-family: 'Roboto Condensed', sans-serif;
+   font-size: 23px;
+}
+
+.row .col-sm-4 img{
+   height: 100px;
+   margin-bottom: 10px;
 }

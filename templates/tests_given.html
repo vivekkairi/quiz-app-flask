@@ -6,12 +6,14 @@
 		text-align: center;
 	}
 </style>
-<table border="1" width="70%" align="center">
-	<tr align="center">
-		<td>Test ID</td>
-		<td>Marks</td>
-		<td></td>
-	</tr>
+<table class="table" width="70%" align="center">
+	<thead class="thead-dark">
+		<tr align="center">
+			<td>Test ID</td>
+			<td>Marks</td>
+			<td></td>
+		</tr>
+	</thead>
     {% for test in tests %}
     <tr>	
     	<td>{{test['test_id']}}</td> 

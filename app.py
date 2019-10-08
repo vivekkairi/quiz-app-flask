@@ -18,7 +18,9 @@ import random
 import json
 import csv
 import operator
-
+from wtforms_components import TimeField
+from wtforms.fields.html5 import DateField
+from wtforms.validators import ValidationError
 
 app = Flask(__name__)
 app.secret_key= 'huihui'
@@ -139,13 +141,27 @@ class RegisterForm(Form):
 
 
 class UploadForm(FlaskForm):
+
 	doc = FileField('Docx Upload', validators=[FileRequired()])
-	start_date_time = DateTimeField('Start Date & Time')
-	end_date_time = DateTimeField('End Date & Time')
+	start_date = DateField('Start Date')
+	start_time = TimeField('Start Time', default=datetime.now())
+	end_date = DateField('End Date')
+	end_time = TimeField('End Time', default=datetime.now())
 	show_result = BooleanField('Show Result after completion')
-	duration = IntegerField('Duration')
+	duration = IntegerField('Duration(in min)')
 	password = StringField('Test Password', [validators.Length(min=3, max=6)])
 
+	def validate_end_date(form, field):
+		if field.data < form.start_date.data:
+			raise ValidationError("End date must not be earlier than start date.")
+	
+	def validate_end_time(form, field):
+		start_date_time = datetime.strptime(str(form.start_date.data) + " " + str(form.start_time.data),"%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d %H:%M")
+		end_date_time = datetime.strptime(str(form.end_date.data) + " " + str(field.data),"%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d %H:%M")
+		print(start_date_time)
+		print(end_date_time)
+		if start_date_time >= end_date_time:
+			raise ValidationError("End date time must not be earlier/equal than start date time")
 
 class TestForm(Form):
 	test_id = StringField('Test ID')
@@ -238,27 +254,43 @@ def create_test():
 		cur = mysql.connection.cursor()
 		d = doctodict('questions/' + f.filename.replace(' ', '_').replace('(','').replace(')',''))
 		test_id = generate_slug(2)
-		for no, data in d.items():
-			marks = data['((MARKS)) (1/2/3...)']
-			a = data['((OPTION_A))']
-			b = data['((OPTION_B))']
-			c = data['((OPTION_C))']
-			d = data['((OPTION_D))']
-			question = data['((QUESTION))']
-			correct_ans = data['((CORRECT_CHOICE)) (A/B/C/D)']
-			explanation = data['((EXPLANATION)) (OPTIONAL)']
-			cur.execute('INSERT INTO questions(test_id,qid,q,a,b,c,d,ans,marks,explanation) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)', 
-				(test_id,no,question,a,b,c,d,correct_ans,marks,explanation))
+		try:
+			print("Check")
+			print(test_id)
+			for no, data in d.items():
+				marks = data['((MARKS)) (1/2/3...)']
+				a = data['((OPTION_A))']
+				b = data['((OPTION_B))']
+				c = data['((OPTION_C))']
+				d = data['((OPTION_D))']
+				question = data['((QUESTION))']
+				correct_ans = data['((CORRECT_CHOICE)) (A/B/C/D)']
+				explanation = data['((EXPLANATION)) (OPTIONAL)']
+				
+				cur.execute('INSERT INTO questions(test_id,qid,q,a,b,c,d,ans,marks,explanation) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)', 
+					(test_id,no,question,a,b,c,d,correct_ans,marks,explanation))
+				mysql.connection.commit()
+			start_date = form.start_date.data
+			end_date = form.end_date.data
+			start_time = form.start_time.data
+			end_time = form.end_time.data
+			start_date_time = str(start_date) + " " + str(start_time)
+			end_date_time = str(end_date) + " " + str(end_time)
+			show_result = form.show_result.data
+			duration = form.duration.data
+			password = form.password.data
+			
+			cur.execute('INSERT INTO teachers (username, test_id, start, end, duration, show_ans, password) values(%s,%s,%s,%s,%s,%s,%s)',
+				(dict(session)['username'], test_id, start_date_time, end_date_time, duration, show_result, password))
 			mysql.connection.commit()
-		start_date_time = form.start_date_time.data
-		end_date_time = form.end_date_time.data
-		show_result = form.show_result.data
-		duration = form.duration.data
-		password = form.password.data
-		cur.execute('INSERT INTO teachers (username, test_id, start, end, duration, show_ans, password) values(%s,%s,%s,%s,%s,%s,%s)',
-			(dict(session)['username'], test_id, start_date_time, end_date_time, duration, show_result, password))
-		mysql.connection.commit()
-		cur.close()
+			cur.close()
+			flash(f'Test ID: {test_id}', 'success')
+			return redirect(url_for('dashboard'))
+		except Exception as e:
+			print(e)
+			flash('Invalid Input File Format','danger')
+			return redirect(url_for('create_test'))
+		
 	return render_template('create_test.html' , form = form)
 
 
@@ -299,9 +331,11 @@ def test(testid):
 			mysql.connection.commit()
 			cur.close()
 		else:
-			cur.execute('UPDATE studentTestInfo set completed=true and time_left=sec_to_time(0) where test_id = %s and username = %s', (testid, session['username']))
+			cur.execute('UPDATE studentTestInfo set completed=true and time_left="00:00:00" where test_id = %s and username = %s', (testid, session['username']))
 			mysql.connection.commit()
 			cur.close()
+			flash("Time Over", 'info')
+			return redirect(url_for('dashboard'))
 
 
 @app.route("/give-test", methods = ['GET', 'POST'])
@@ -327,6 +361,7 @@ def give_test():
 				now = now.strftime("%Y-%m-%d %H:%M:%S")
 				now = datetime.strptime(now,"%Y-%m-%d %H:%M:%S")
 				if datetime.strptime(start,"%Y-%m-%d %H:%M:%S") < now and datetime.strptime(end,"%Y-%m-%d %H:%M:%S") > now:
+					print("Inside")
 					results = cur.execute('SELECT time_to_sec(time_left) as time_left,completed from studentTestInfo where username = %s and test_id = %s', (session['username'], test_id))
 					if results > 0:
 						results = cur.fetchone()
@@ -349,6 +384,12 @@ def give_test():
 					else:
 						cur.execute('INSERT into studentTestInfo (username, test_id,time_left) values(%s,%s,SEC_TO_TIME(%s))', (session['username'], test_id, duration))
 						mysql.connection.commit()
+				else:
+					if datetime.strptime(start,"%Y-%m-%d %H:%M:%S") > now:
+						flash(f'Test start time is {start}', 'danger')
+					else:
+						flash(f'Test has ended', 'danger')
+					return redirect(url_for('give_test'))
 				return redirect(url_for('test' , testid = test_id))
 			else:
 				flash('Invalid password', 'danger')

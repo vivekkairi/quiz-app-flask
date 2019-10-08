@@ -28,6 +28,7 @@ $(document).ready( function() {
     var time = parseInt($('#time').text()), display = $('#time');
     startTimer(time, display);
     sendTime();
+    flag_time = true;
 })
 
 var unmark_all = function() {
@@ -59,10 +60,10 @@ var display_ques = function(move) {
         }
     });
 }
-
+var flag_time = true;
 function startTimer(duration, display) {
     var timer = duration,hours, minutes, seconds;
-    setInterval(function () {
+    var interval = setInterval(function () {
         hours = parseInt(timer / 3600 ,10)
         minutes = parseInt(timer / 60, 10);
         seconds = parseInt(timer % 60, 10);
@@ -74,20 +75,27 @@ function startTimer(duration, display) {
 
         if (--timer < 0) {
             finish_test();
-            return;
+            clearInterval(interval);
+            flag_time = false;
         }
     }, 1000);
 }
 
 function finish_test() {
+    $('#msg').addClass('alert-info');
+    $('#msg').append("Test Over");
     $.ajax({
         type: "POST",
         dataType: "json",
-        data: {flag: 'completed'}
+        data: {flag: 'completed'},
     });
+    
 }
 function sendTime() {
-    setInterval(function() {
+    var intervalTime = setInterval(function() {
+        if(flag_time == false){
+            clearInterval(intervalTime);
+        }
         var time = $('#time').text();
         var [hh,mm,ss] = time.split(':');
         hh = parseInt(hh);
@@ -99,6 +107,9 @@ function sendTime() {
             dataType: "json",
             data: {flag:'time', time: seconds},
         });
+        if(flag_time == false){
+            clearInterval(intervalTime);
+        }
     }, 5000);
 }
 $(document).on('click', '#next', function(e){
@@ -208,7 +219,30 @@ $('#options').on('click', 'td', function(){
     }
 });
 
+var submit_overlay_display = true;
+$('#finish').on("click", function(e) {
+    $('#submit-overlay').empty();
+    var count = marked();
+    var remaining = nos.length - count;
+    if(submit_overlay_display) {
+        document.getElementById("submit-overlay").style.display = "block";
+        $('#submit-overlay').append('<div style="background-color:white; display: inline-block;/*! margin: auto; *//*! margin: 0 auto; */position: absolute;left: 35%;top: 33%;padding: 10PX;" align="center"><table class="table mx-auto" style="width:50%;"> <tr><td>Total Questions</td><td>Attempted</td><td>Remaining</td></tr><tr><td>'+ nos.length +'</td><td>'+ count +'</td><td>'+ remaining +'</td></tr></table> <a class="btn btn-primary" onclick="finish_test();">Submit Test</a></div>');
+        submit_overlay_display=false;
+    } else {
+        document.getElementById("submit-overlay").style.display = "none";
+        submit_overlay_display = true;
+    }
+});
 
+var marked = function() {
+    var count = 0;
+    for(var i=1;i<=nos.length;i++){
+        if(data[i].status == SUBMITTED || data[i].status == SUBMITTED_BOOKMARKED){
+            count++;
+        } 
+    }
+    return count;
+}
 
 var make_array = function() {
     for(var i=0; i<nos.length; i++){

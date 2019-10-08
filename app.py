@@ -67,7 +67,6 @@ activate your account:
 Questions? Comments? Email nickqwerty76@gmail.com.
 '''
 
-@app.route('/sendmail', methods = ['GET','POST'])
 def send_email(recipients,html_body):
 	try:
 		msg = Message('Confirm Your Email Address',
@@ -185,6 +184,9 @@ def register():
 		# if is_valid == False:
 		# 	flash('Wrong email','danger')
 		# do something
+	
+		send_confirmation_email(email)
+		# first verify in fn then do query
 
 		username = form.username.data
 		password = sha256_crypt.encrypt(str(form.password.data))
@@ -192,7 +194,6 @@ def register():
 		cur.execute('INSERT INTO users(username,name,email, password,confirmed) values(%s,%s,%s,%s,0)', (username,name, email, password))
 		mysql.connection.commit()
 		cur.close()
-		send_confirmation_email(email)
 		flash('Thanks for registering!  Please check your email to confirm your email address.', 'success')
 		return redirect(url_for('index')) 
 		# change in login function to redirect to warning page
@@ -426,7 +427,11 @@ def check_result(username, testid):
 			results = cur.fetchone()
 			check = results['show_ans']
 			if check == 1:
-				results = cur.execute('SELECT q,explanation,marks,questions.qid as qid,questions.ans as correct, students.ans as marked,a,b,c,d from students,questions where username = %s and students.test_id = questions.test_id and students.test_id = %s and students.qid=questions.qid', (username, testid))
+				results = cur.execute('select explanation,q,a,b,c,d,marks,q.qid as qid, \
+					q.ans as correct, ifnull(s.ans,0) as marked from questions q left join \
+					students s on  s.test_id = q.test_id and s.test_id = %s \
+					and s.username = %s and s.qid = q.qid group by q.qid \
+					order by LPAD(lower(q.qid),10,0) asc', (testid, username))
 				if results > 0:
 					results = cur.fetchall()
 					return render_template('tests_result.html', results= results)
@@ -441,7 +446,9 @@ def totmarks(username,tests):
 	cur = mysql.connection.cursor()
 	for test in tests:
 		testid = test['test_id']
-		results = cur.execute("select sum(marks) as totalmks from students s,questions q where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id and s.ans=q.ans", (username, testid))
+		results = cur.execute("select sum(marks) as totalmks from students s,questions q \
+			where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id \
+			and s.ans=q.ans", (username, testid))
 		results = cur.fetchone()
 		test['marks'] = results['totalmks']
 	print(tests)
@@ -450,7 +457,9 @@ def totmarks(username,tests):
 def marks_calc(username,testid):
 	if username == session['username']:
 		cur = mysql.connection.cursor()
-		results = cur.execute("select sum(marks) as totalmks from students s,questions q where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id and s.ans=q.ans", (username, testid))
+		results = cur.execute("select sum(marks) as totalmks from students s,questions q\
+		 where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id\
+		  and s.ans=q.ans", (username, testid))
 		results = cur.fetchone()
 		return results['totalmks']
 
@@ -474,7 +483,9 @@ def tests_given(username):
 def student_results(username, testid):
 	if username == session['username']:
 		cur = mysql.connection.cursor()
-		results = cur.execute('select users.name as name,users.username as username,test_id from studentTestInfo,users where test_id = %s and completed = 1 and studentTestInfo.username=users.username ', [testid])
+		results = cur.execute('select users.name as name,users.username as\
+		 username,test_id from studentTestInfo,users where test_id = %s and\
+		  completed = 1 and studentTestInfo.username=users.username ', [testid])
 		results = cur.fetchall()
 		final = []
 		count = 1

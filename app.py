@@ -167,6 +167,8 @@ class UploadForm(FlaskForm):
 	end_date = DateField('End Date')
 	end_time = TimeField('End Time', default=datetime.now())
 	show_result = BooleanField('Show Result after completion')
+	neg_mark = BooleanField('Enable negative marking')
+
 	duration = IntegerField('Duration(in min)')
 	password = StringField('Test Password', [validators.Length(min=3, max=6)])
 
@@ -296,14 +298,16 @@ def create_test():
 			start_date_time = str(start_date) + " " + str(start_time)
 			end_date_time = str(end_date) + " " + str(end_time)
 			show_result = form.show_result.data
+			neg_mark = form.neg_mark.data
+
 			duration = int(form.duration.data)*60
 			password = form.password.data
 			subject = form.subject.data
 			topic = form.topic.data
 			print(subject)
 			print(topic)
-			cur.execute('INSERT INTO teachers (username, test_id, start, end, duration, show_ans, password, subject, topic) values(%s,%s,%s,%s,%s,%s,%s, %s,%s)',
-				(dict(session)['username'], test_id, start_date_time, end_date_time, duration, show_result, password, subject, topic))
+			cur.execute('INSERT INTO teachers (username, test_id, start, end, duration, show_ans, password, subject, topic,neg_mark) values(%s,%s,%s,%s,%s,%s,%s, %s,%s,%s)',
+				(dict(session)['username'], test_id, start_date_time, end_date_time, duration, show_result, password, subject, topic, neg_mark))
 			mysql.connection.commit()
 			cur.close()
 			flash(f'Test ID: {test_id}', 'success')
@@ -481,25 +485,62 @@ def check_result(username, testid):
 
 #tests==dict in tuple
 
+def neg_marks(username,testid):
+	cur=mysql.connection.cursor()
+	results = cur.execute("select marks,q.qid as qid, \
+				q.ans as correct, ifnull(s.ans,0) as marked from questions q left join \
+				students s on  s.test_id = q.test_id and s.test_id = %s \
+				and s.username = %s and s.qid = q.qid group by q.qid \
+				order by LPAD(lower(q.qid),10,0) asc", (testid, username))
+	data=cur.fetchall()
+
+	sum=0.0
+	for i in range(results):
+		print(i,end=' ')
+		print(sum)
+		if(str(data[i]['marked']).upper() != '0'):
+			if(str(data[i]['marked']).upper() != str(data[i]['correct'])):
+				sum=sum-0.25*int(data[i]['marks'])
+			elif(str(data[i]['marked']).upper() == str(data[i]['correct'])):
+				sum+=int(data[i]['marks'])
+	return sum
+
 def totmarks(username,tests): 
 	cur = mysql.connection.cursor()
 	for test in tests:
 		testid = test['test_id']
-		results = cur.execute("select sum(marks) as totalmks from students s,questions q \
-			where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id \
-			and s.ans=q.ans", (username, testid))
-		results = cur.fetchone()
-		test['marks'] = results['totalmks']
+
+		results=cur.execute("select neg_mark from teachers where test_id=%s",[testid])
+		results=cur.fetchone()
+		if results['neg_mark']==1:
+			test['marks'] = neg_marks(username,testid) 
+
+		else
+			results = cur.execute("select sum(marks) as totalmks from students s,questions q \
+				where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id \
+				and s.ans=q.ans", (username, testid))
+
+			results = cur.fetchone()
+			test['marks'] = results['totalmks']
 	return tests
+
 
 def marks_calc(username,testid):
 	if username == session['username']:
 		cur = mysql.connection.cursor()
-		results = cur.execute("select sum(marks) as totalmks from students s,questions q\
-		 where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id\
-		  and s.ans=q.ans", (username, testid))
-		results = cur.fetchone()
-		return results['totalmks']
+
+		results=cur.execute("select neg_mark from teachers where test_id=%s",[testid])
+		results=cur.fetchone()
+		if results['neg_mark']==1:
+			return neg_marks(username,testid) 
+		else
+			results = cur.execute("select sum(marks) as totalmks from students s,questions q \
+				where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id \
+				and s.ans=q.ans", (username, testid))
+
+			results = cur.fetchone()
+
+			return results['totalmks']
 
 
 		

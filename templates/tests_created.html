@@ -13,15 +13,16 @@
         <tbody>
             {% for test in tests %}
                 <tr>
-                    <th>{{test['test_id']}}</th>
-                    <th>{{test['password']}}</th>
-                    <th>{{test['subject']}}</th>
-                    <th>{{test['topic']}}</th>
-                    <th><a class="btn btn-primary btn-md mx-2" href=/{{session.username}}/tests-created/{{test['test_id']}}>Result</a><a class="btn btn-primary" href="/{{session.username}}/tests-created/{{test['test_id']}}/questions">Questions</a></th>
+                    <td>{{test['test_id']}}</td>
+                    <td>{{test['password']}}</td>
+                    <td>{{test['subject']}}</td>
+                    <td>{{test['topic']}}</td>
+                    <td><a class="btn btn-primary btn-md mx-2" href=/{{session.username}}/tests-created/{{test['test_id']}}>Result</a><a class="btn btn-primary" href="/{{session.username}}/tests-created/{{test['test_id']}}/questions">Questions</a></td>
                 </tr>
             {% endfor %}
             
         </tbody>
     
     </table>
-{% endblock %}1
+
+{% endblock %}

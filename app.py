@@ -163,9 +163,9 @@ class UploadForm(FlaskForm):
 	topic = StringField('Topic')
 	doc = FileField('Docx Upload', validators=[FileRequired()])
 	start_date = DateField('Start Date')
-	start_time = TimeField('Start Time', default=datetime.now())
+	start_time = TimeField('Start Time', default=datetime.utcnow()+timedelta(hours=5.5))
 	end_date = DateField('End Date')
-	end_time = TimeField('End Time', default=datetime.now())
+	end_time = TimeField('End Time', default=datetime.utcnow()+timedelta(hours=5.5))
 	show_result = BooleanField('Show Result after completion')
 	duration = IntegerField('Duration(in min)')
 	password = StringField('Test Password', [validators.Length(min=3, max=6)])
@@ -309,7 +309,6 @@ def create_test():
 			flash(f'Test ID: {test_id}', 'success')
 			return redirect(url_for('dashboard'))
 		except Exception as e:
-			print(e)
 			flash('Invalid Input File Format','danger')
 			return redirect(url_for('create_test'))
 		
@@ -489,18 +488,17 @@ def totmarks(username,tests):
 			where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id \
 			and s.ans=q.ans", (username, testid))
 		results = cur.fetchone()
+		if str(results['totalmks']) == 'None':
+			results['totalmks'] = 0
 		test['marks'] = results['totalmks']
 	return tests
 
 def marks_calc(username,testid):
 	if username == session['username']:
 		cur = mysql.connection.cursor()
-		results = cur.execute("select sum(marks) as totalmks from students s,questions q\
-		 where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id\
-		  and s.ans=q.ans", (username, testid))
+		results = cur.execute("select sum(marks) as totalmks from students s,questions q where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id and s.ans=q.ans", (username, testid))
 		results = cur.fetchone()
 		return results['totalmks']
-
 
 		
 @app.route('/<username>/tests-given')

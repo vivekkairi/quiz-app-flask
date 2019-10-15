@@ -268,6 +268,6 @@ var make_array = function() {
     }
 }
 
-//window.addEventListener('blur', function() { 
- //   window.location.replace('/dashboard');
- //});
+window.addEventListener('blur', function() { 
+    window.location.replace('/dashboard');
+ });

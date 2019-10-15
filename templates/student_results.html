@@ -27,15 +27,19 @@
 <center><a class="btn btn-primary" id="download">Download as CSV</a></center>
 <script>
     $('#download').on('click', function(){
+        var url = window.location.href;
         var list = url.split('/');
         $.ajax({
             type:"POST",
             dataType:"json",
             data : {test_id: list[list.length-1]},
             success: {
-
+                
             }
         });
     });
+    var url = window.location.href;
+    var list = url.split('/');
+    $("#download").attr('href','/static/' + list[list.length-1] + ".csv");
 </script>
 {% endblock %}

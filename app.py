@@ -101,10 +101,13 @@ def send_confirmation_email(user_email):
 	confirm_url = url_for('confirm_email',
 		token=confirm_serializer.dumps(user_email, salt='email-confirmation-salt'),
 		_external=True)
-	# local_ip = get_local_ip()
-	# x=confirm_url.split("127.0.0.1:5000")
-	# print(x)
-	# confirm_url = x[0] + local_ip + x[1]
+	local_ip = get_local_ip()
+	x=""
+	if 'localhost' in confirm_url:
+		x=confirm_url.split("localhost:5000")
+	else:
+		x=confirm_url.split("127.0.0.1:5000")
+	confirm_url = x[0] + local_ip + ":5000"+ x[1]
 	html = render_template_string(htmlbody, confirm_url=confirm_url)
 
 	send_email([user_email], html)
@@ -167,6 +170,7 @@ class UploadForm(FlaskForm):
 	end_date = DateField('End Date')
 	end_time = TimeField('End Time', default=datetime.utcnow()+timedelta(hours=5.5))
 	show_result = BooleanField('Show Result after completion')
+	neg_mark = BooleanField('Enable negative marking')
 	duration = IntegerField('Duration(in min)')
 	password = StringField('Test Password', [validators.Length(min=3, max=6)])
 
@@ -177,10 +181,12 @@ class UploadForm(FlaskForm):
 	def validate_end_time(form, field):
 		start_date_time = datetime.strptime(str(form.start_date.data) + " " + str(form.start_time.data),"%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d %H:%M")
 		end_date_time = datetime.strptime(str(form.end_date.data) + " " + str(field.data),"%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d %H:%M")
-		print(start_date_time)
-		print(end_date_time)
 		if start_date_time >= end_date_time:
 			raise ValidationError("End date time must not be earlier/equal than start date time")
+	
+	def validate_start_date(form, field):
+		if datetime.strptime(str(form.start_date.data) + " " + str(form.start_time.data),"%Y-%m-%d %H:%M:%S") < datetime.now():
+			raise ValidationError("Start date and time must not be earlier than current")
 
 class TestForm(Form):
 	test_id = StringField('Test ID')
@@ -213,7 +219,7 @@ def register():
 		mysql.connection.commit()
 		cur.close()
 		flash('Thanks for registering!  Please check your email to confirm your email address.', 'success')
-		return redirect(url_for('index')) 
+		return redirect(url_for('login')) 
 		# change in login function to redirect to warning page
 
 	return render_template('register.html', form=form)
@@ -296,14 +302,16 @@ def create_test():
 			start_date_time = str(start_date) + " " + str(start_time)
 			end_date_time = str(end_date) + " " + str(end_time)
 			show_result = form.show_result.data
+			neg_mark = form.neg_mark.data
+
 			duration = int(form.duration.data)*60
 			password = form.password.data
 			subject = form.subject.data
 			topic = form.topic.data
 			print(subject)
 			print(topic)
-			cur.execute('INSERT INTO teachers (username, test_id, start, end, duration, show_ans, password, subject, topic) values(%s,%s,%s,%s,%s,%s,%s, %s,%s)',
-				(dict(session)['username'], test_id, start_date_time, end_date_time, duration, show_result, password, subject, topic))
+			cur.execute('INSERT INTO teachers (username, test_id, start, end, duration, show_ans, password, subject, topic,neg_mark) values(%s,%s,%s,%s,%s,%s,%s, %s,%s,%s)',
+				(dict(session)['username'], test_id, start_date_time, end_date_time, duration, show_result, password, subject, topic, neg_mark))
 			mysql.connection.commit()
 			cur.close()
 			flash(f'Test ID: {test_id}', 'success')
@@ -358,7 +366,7 @@ def test(testid):
 			cur.execute('UPDATE studentTestInfo set completed=1,time_left=sec_to_time(0) where test_id = %s and username = %s', (testid, session['username']))
 			mysql.connection.commit()
 			cur.close()
-			flash("Time Over", 'info')
+			flash("Test submitted successfully", 'info')
 			return json.dumps({'sql':'fired'})
 
 
@@ -480,25 +488,60 @@ def check_result(username, testid):
 
 #tests==dict in tuple
 
+def neg_marks(username,testid):
+	cur=mysql.connection.cursor()
+	results = cur.execute("select marks,q.qid as qid, \
+				q.ans as correct, ifnull(s.ans,0) as marked from questions q left join \
+				students s on  s.test_id = q.test_id and s.test_id = %s \
+				and s.username = %s and s.qid = q.qid group by q.qid \
+				order by LPAD(lower(q.qid),10,0) asc", (testid, username))
+	data=cur.fetchall()
+
+	sum=0.0
+	for i in range(results):
+		print(i,end=' ')
+		print(sum)
+		if(str(data[i]['marked']).upper() != '0'):
+			if(str(data[i]['marked']).upper() != str(data[i]['correct'])):
+				sum=sum-0.25*int(data[i]['marks'])
+			elif(str(data[i]['marked']).upper() == str(data[i]['correct'])):
+				sum+=int(data[i]['marks'])
+	return sum
+
 def totmarks(username,tests): 
 	cur = mysql.connection.cursor()
 	for test in tests:
 		testid = test['test_id']
-		results = cur.execute("select sum(marks) as totalmks from students s,questions q \
-			where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id \
-			and s.ans=q.ans", (username, testid))
-		results = cur.fetchone()
-		if str(results['totalmks']) == 'None':
-			results['totalmks'] = 0
-		test['marks'] = results['totalmks']
+		results=cur.execute("select neg_mark from teachers where test_id=%s",[testid])
+		results=cur.fetchone()
+		if results['neg_mark']==1:
+			test['marks'] = neg_marks(username,testid) 
+
+		else:
+			results = cur.execute("select sum(marks) as totalmks from students s,questions q \
+				where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id \
+				and s.ans=q.ans", (username, testid))	
+			
+			results = cur.fetchone()
+			if str(results['totalmks']) == 'None':
+				results['totalmks'] = 0
+			test['marks'] = results['totalmks']
 	return tests
+
 
 def marks_calc(username,testid):
 	if username == session['username']:
 		cur = mysql.connection.cursor()
-		results = cur.execute("select sum(marks) as totalmks from students s,questions q where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id and s.ans=q.ans", (username, testid))
-		results = cur.fetchone()
-		return results['totalmks']
+		results=cur.execute("select neg_mark from teachers where test_id=%s",[testid])
+		results=cur.fetchone()
+		if results['neg_mark']==1:
+			return neg_marks(username,testid) 
+		else:
+			results = cur.execute("select sum(marks) as totalmks from students s,questions q where s.username=%s and s.test_id=%s and s.qid=q.qid and s.test_id=q.test_id and s.ans=q.ans", (username, testid))
+			results = cur.fetchone()
+			if str(results['totalmks']) == 'None':
+				results['totalmks'] = 0
+			return results['totalmks']
 
 		
 @app.route('/<username>/tests-given')
@@ -538,7 +581,7 @@ def student_results(username, testid):
 				writer = csv.writer(f)
 				writer.writerow(fields)
 				writer.writerows(final)
-			return send_file('static/' + testid + '.csv', as_attachment=True)
+			#return send_file('/static/' + testid + '.csv', as_attachment=True)
 
 @app.route('/<username>/tests-created/<testid>/questions', methods = ['POST','GET'])
 @is_logged

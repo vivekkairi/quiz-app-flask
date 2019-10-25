@@ -11,9 +11,9 @@ A quiz app where user can create as well as give tests based on Flask micro fram
 
 ## Screenshots
 
-![Index](https://github.com/vivekkairi/quiz-app-flask/static/index.png)
+![Index](https://github.com/vivekkairi/quiz-app-flask/blob/master/static/index.png)
 
-![Dashboard](https://github.com/vivekkairi/quiz-app-flask/static/dashboard.png)
+![Dashboard](https://github.com/vivekkairi/quiz-app-flask/blob/master/static/dashboard.png)
 
 ## Installation
 

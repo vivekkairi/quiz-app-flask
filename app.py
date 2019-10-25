@@ -29,8 +29,8 @@ app.secret_key= 'huihui'
 
 #Config MySQL
 app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'nubaf'
-app.config['MYSQL_PASSWORD'] = 'nubafgg'
+app.config['MYSQL_USER'] = ''
+app.config['MYSQL_PASSWORD'] = ''
 app.config['MYSQL_DB'] = 'flask'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
@@ -40,8 +40,8 @@ app.config.update(
 	MAIL_SERVER='smtp.gmail.com',
 	MAIL_PORT=465,
 	MAIL_USE_SSL=True,
-	MAIL_USERNAME = 'nickqwerty76@gmail.com',
-	MAIL_PASSWORD = 'Zeitgeist77'
+	MAIL_USERNAME = '',
+	MAIL_PASSWORD = ''
 	)
 mail = Mail(app)
 
@@ -66,7 +66,7 @@ activate your account:
 <a href="{{ confirm_url }}">{{ confirm_url }}</a>
  <p>
 --
-Questions? Comments? Email nickqwerty76@gmail.com.</p>
+Questions? Comments? Email </p>
 '''
 
 #email verifier api key
@@ -280,8 +280,6 @@ def create_test():
 		d = doctodict('questions/' + f.filename.replace(' ', '_').replace('(','').replace(')',''))
 		test_id = generate_slug(2)
 		try:
-			print("Check")
-			print(test_id)
 			for no, data in d.items():
 				marks = data['((MARKS)) (1/2/3...)']
 				a = data['((OPTION_A))']
@@ -308,8 +306,6 @@ def create_test():
 			password = form.password.data
 			subject = form.subject.data
 			topic = form.topic.data
-			print(subject)
-			print(topic)
 			cur.execute('INSERT INTO teachers (username, test_id, start, end, duration, show_ans, password, subject, topic,neg_mark) values(%s,%s,%s,%s,%s,%s,%s, %s,%s,%s)',
 				(dict(session)['username'], test_id, start_date_time, end_date_time, duration, show_result, password, subject, topic, neg_mark))
 			mysql.connection.commit()
@@ -457,7 +453,6 @@ def random_gen():
 			total = data['count(*)']
 			nos = list(range(1,int(total)+1))
 			random.Random(id).shuffle(nos)
-			print(nos)
 			cur.close()
 			return json.dumps(nos)
 
@@ -499,8 +494,6 @@ def neg_marks(username,testid):
 
 	sum=0.0
 	for i in range(results):
-		print(i,end=' ')
-		print(sum)
 		if(str(data[i]['marked']).upper() != '0'):
 			if(str(data[i]['marked']).upper() != str(data[i]['correct'])):
 				sum=sum-0.25*int(data[i]['marks'])

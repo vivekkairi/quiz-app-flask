@@ -52,3 +52,4 @@ python3 app.py or flask run
 [MIT](https://choosealicense.com/licenses/mit/)
 
 
+[![Run on Repl.it](https://repl.it/badge/github/vivekkairi/quiz-app-flask)](https://repl.it/github/vivekkairi/quiz-app-flask)

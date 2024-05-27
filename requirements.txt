@@ -17,7 +17,7 @@ Flask_WTF == 0.14.2
 WTForms == 2.2.1
 
 # app.py: 21
-WTForms_Components == 0.10.4
+WTForms_Components ==0.10.5
 
 # app.py: 8
 Werkzeug == 0.15.2

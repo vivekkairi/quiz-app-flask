@@ -14,7 +14,7 @@ Flask_MySQLdb == 0.2.0
 Flask_WTF == 0.14.2
 
 # app.py: 3,22,23
-WTForms == 2.2.1
+WTForms ==2.3.3
 
 # app.py: 21
 WTForms_Components ==0.10.5

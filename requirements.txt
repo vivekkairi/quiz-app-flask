@@ -5,7 +5,7 @@
 Flask == 1.0.2
 
 # app.py: 12
-Flask_Mail == 0.9.1
+Flask_Mail ==0.10.0
 
 # app.py: 2
 Flask_MySQLdb == 0.2.0

@@ -32,7 +32,7 @@ email_verifier == 1.0.0
 itsdangerous == 1.1.0
 
 # app.py: 6
-passlib == 1.7.1
+passlib ==1.7.4
 
 # app.py: 9
 python_docx == 0.8.10

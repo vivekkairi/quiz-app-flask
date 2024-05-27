@@ -20,7 +20,7 @@ WTForms == 2.2.1
 WTForms_Components ==0.10.5
 
 # app.py: 8
-Werkzeug == 0.15.2
+Werkzeug ==3.0.3
 
 # app.py: 10
 coolname == 1.1.0

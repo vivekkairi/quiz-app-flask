@@ -2,7 +2,7 @@
 # https://github.com/damnever/pigar
 
 # app.py: 1,14
-Flask == 1.0.2
+Flask ==1.1.4
 
 # app.py: 12
 Flask_Mail == 0.9.1

@@ -11,7 +11,7 @@ Flask_Mail == 0.9.1
 Flask_MySQLdb == 0.2.0
 
 # app.py: 5
-Flask_WTF == 0.14.2
+Flask_WTF ==0.15.1
 
 # app.py: 3,22,23
 WTForms == 2.2.1

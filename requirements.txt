@@ -35,7 +35,7 @@ itsdangerous == 1.1.0
 passlib == 1.7.1
 
 # app.py: 9
-python_docx == 0.8.10
+python_docx ==0.8.11
 
 # app.py: 16
 validate_email == 1.3

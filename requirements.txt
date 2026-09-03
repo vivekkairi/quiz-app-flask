@@ -23,7 +23,7 @@ WTForms_Components ==0.10.5
 Werkzeug == 0.15.2
 
 # app.py: 10
-coolname == 1.1.0
+coolname ==5.0.0
 
 # app.py: 25
 email_verifier == 1.0.0

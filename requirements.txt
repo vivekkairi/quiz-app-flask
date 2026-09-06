@@ -29,7 +29,7 @@ coolname == 1.1.0
 email_verifier == 1.0.0
 
 # app.py: 15
-itsdangerous == 1.1.0
+itsdangerous ==2.2.0
 
 # app.py: 6
 passlib == 1.7.1
